@@ -4,4 +4,6 @@ object NutriRoutes {
     const val SPLASH = "splash"
     const val REGISTRO = "registro"
     const val IMC = "imc"
+    const val MODULOS = "modulos"
+    const val HOME = "home"
 }

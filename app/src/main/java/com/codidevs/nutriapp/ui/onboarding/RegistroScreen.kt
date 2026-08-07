@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.ui.components.ScreenHeader
 import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LeafLight
@@ -26,7 +27,10 @@ import com.codidevs.nutriapp.ui.theme.MangoLight
  * El usuario presiona "Continuar" y pasa al cálculo del IMC.
  */
 @Composable
-fun RegistroScreen(onContinuar: (nombre: String, edad: String, peso: String, estatura: String) -> Unit) {
+fun RegistroScreen(
+    onBack: () -> Unit,
+    onContinuar: (nombre: String, edad: String, peso: String, estatura: String) -> Unit
+) {
     var nombre by remember { mutableStateOf("") }
     var edad by remember { mutableStateOf("") }
     var peso by remember { mutableStateOf("") }
@@ -72,13 +76,7 @@ fun RegistroScreen(onContinuar: (nombre: String, edad: String, peso: String, est
     ) {
         Spacer(Modifier.height(12.dp))
 
-        Text(
-            text = "←  Cuéntanos de ti",
-            style = MaterialTheme.typography.headlineSmall,
-            color = LeafDark,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth()
-        )
+        ScreenHeader(titulo = "Cuéntanos de ti", onBack = onBack)
 
         Spacer(Modifier.height(8.dp))
 
