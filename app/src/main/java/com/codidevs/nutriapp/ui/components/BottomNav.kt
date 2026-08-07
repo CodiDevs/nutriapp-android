@@ -2,19 +2,18 @@ package com.codidevs.nutriapp.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.ui.theme.Cream
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LineColor
@@ -29,7 +28,7 @@ fun BottomNav(
     onTab: (String) -> Unit
 ) {
     Surface(
-        color = Color.White,
+        color = Cream,
         border = BorderStroke(2.dp, LineColor),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -59,11 +58,7 @@ private fun NavItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = { onTab(id) }
-            )
+            .clickable(onClick = { onTab(id) })
             .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

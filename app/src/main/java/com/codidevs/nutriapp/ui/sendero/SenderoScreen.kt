@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Leaf
@@ -50,57 +51,84 @@ private val NIVELES = listOf(
 fun SenderoScreen(
     onNivelClick: (Int) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp)
-    ) {
-        Spacer(Modifier.height(4.dp))
+    var mostrarBloqueado by remember { mutableStateOf(false) }
 
-        Text(
-            text = "Sendero de Nutrición",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = Ink
-        )
-
-        Spacer(Modifier.height(14.dp))
-
-        // Globo de la mascota
-        Surface(
-            color = Color.White,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(2.dp, Sky),
-            modifier = Modifier.fillMaxWidth()
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = "Sendero de Nutrición",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = Ink
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            // Globo de la mascota
+            Surface(
+                color = Color.White,
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, Sky),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "🍎", fontSize = 32.sp)
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = "¡Sigamos aprendiendo sobre los alimentos!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Ink
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "🍎", fontSize = 32.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "¡Sigamos aprendiendo sobre los alimentos!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Ink
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Nodos del sendero en zigzag
+            NIVELES.forEach { nivel ->
+                NodoNivel(
+                    nivel = nivel,
+                    onClick = {
+                        if (nivel.bloqueado) {
+                            mostrarBloqueado = true
+                        } else {
+                            onNivelClick(nivel.numero)
+                        }
+                    },
+                    reversed = nivel.numero % 2 == 0
                 )
             }
+
+            Spacer(Modifier.height(20.dp))
         }
 
-        Spacer(Modifier.height(20.dp))
-
-        // Nodos del sendero en zigzag
-        NIVELES.forEach { nivel ->
-            NodoNivel(
-                nivel = nivel,
-                onClick = { onNivelClick(nivel.numero) },
-                reversed = nivel.numero % 2 == 0
-            )
+        // Aviso de nivel bloqueado (desaparece solo)
+        if (mostrarBloqueado) {
+            LaunchedEffect(mostrarBloqueado) {
+                delay(2200)
+                mostrarBloqueado = false
+            }
+            Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                containerColor = Ink,
+                contentColor = Color.White
+            ) {
+                Text("🔒 Completa el nivel anterior para desbloquearlo")
+            }
         }
-
-        Spacer(Modifier.height(20.dp))
     }
 }
 
@@ -135,13 +163,7 @@ private fun Nodo(nivel: NivelSendero, onClick: () -> Unit) {
         modifier = Modifier
             .size(64.dp)
             .shadow(4.dp, CircleShape)
-            .then(
-                if (nivel.bloqueado) {
-                    Modifier
-                } else {
-                    Modifier.clickable(onClick = onClick)
-                }
-            )
+            .clickable(onClick = onClick)
             .background(
                 color = if (nivel.bloqueado) Locked else Leaf,
                 shape = CircleShape

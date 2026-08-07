@@ -26,6 +26,8 @@ import com.codidevs.nutriapp.ui.onboarding.ModulosScreen
 import com.codidevs.nutriapp.ui.onboarding.RegistroScreen
 import com.codidevs.nutriapp.ui.onboarding.SplashScreen
 import com.codidevs.nutriapp.ui.perfil.PerfilScreen
+import com.codidevs.nutriapp.ui.sendero.NIVELES_INFO
+import com.codidevs.nutriapp.ui.sendero.NivelDetalleScreen
 import com.codidevs.nutriapp.ui.sendero.SenderoScreen
 import com.codidevs.nutriapp.ui.theme.NutriAppTheme
 
@@ -103,107 +105,57 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+                        // Las 4 pestañas (Inicio, Sendero, Juegos, Perfil) viven en una sola
+                        // pantalla: tocar la barra solo cambia el contenido, sin navegación,
+                        // así no se acumulan copias ni se repite la animación de transición.
                         composable(NutriRoutes.HOME) {
                             TabScaffold(
                                 tabActiva = tabActiva,
-                                onTab = { tab ->
-                                    tabActiva = tab
-                                    navController.navigate(
-                                        when (tab) {
-                                            "home" -> NutriRoutes.HOME
-                                            "sendero" -> NutriRoutes.SENDERO
-                                            "juegos" -> NutriRoutes.JUEGOS
-                                            "perfil" -> NutriRoutes.PERFIL
-                                            else -> NutriRoutes.HOME
-                                        }
-                                    )
-                                }
-                            ) { contentModifier ->
+                                onTab = { tabActiva = it }
+                            ) {
                                 when (tabActiva) {
                                     "sendero" -> SenderoScreen(
-                                        onNivelClick = { /* detalle de nivel (siguiente paso) */ }
+                                        onNivelClick = { numero ->
+                                            navController.navigate(
+                                                "${NutriRoutes.NIVEL_DETALLE}/$numero"
+                                            )
+                                        }
                                     )
                                     "juegos" -> JuegosScreen()
                                     "perfil" -> PerfilScreen(
                                         nombre = nombreUsuario,
-                                        onVerRecompensas = {}
+                                        onVerRecompensas = {
+                                            navController.navigate(NutriRoutes.RECOMPENSAS)
+                                        }
                                     )
                                     else -> HomeScreen(
                                         nombre = nombreUsuario,
-                                        onSendero = {
-                                            tabActiva = "sendero"
-                                            navController.navigate(NutriRoutes.SENDERO)
+                                        onSendero = { tabActiva = "sendero" },
+                                        onRecompensas = {
+                                            navController.navigate(NutriRoutes.RECOMPENSAS)
                                         },
-                                        onRecompensas = { /* recompensas (siguiente paso) */ },
-                                        onPerfil = {
-                                            tabActiva = "perfil"
-                                            navController.navigate(NutriRoutes.PERFIL)
-                                        }
+                                        onPerfil = { tabActiva = "perfil" }
                                     )
                                 }
                             }
                         }
-                        composable(NutriRoutes.SENDERO) {
-                            TabScaffold(
-                                tabActiva = tabActiva,
-                                onTab = { tab ->
-                                    tabActiva = tab
-                                    navController.navigate(
-                                        when (tab) {
-                                            "home" -> NutriRoutes.HOME
-                                            "sendero" -> NutriRoutes.SENDERO
-                                            "juegos" -> NutriRoutes.JUEGOS
-                                            "perfil" -> NutriRoutes.PERFIL
-                                            else -> NutriRoutes.HOME
-                                        }
-                                    )
+                        composable(
+                            "${NutriRoutes.NIVEL_DETALLE}/{nivelId}"
+                        ) { backStackEntry ->
+                            val nivelId = backStackEntry.arguments?.getString("nivelId")
+                                ?.toIntOrNull() ?: 1
+                            val nivel = NIVELES_INFO.firstOrNull { it.numero == nivelId }
+                                ?: NIVELES_INFO.first()
+                            NivelDetalleScreen(
+                                nivel = nivel,
+                                onBack = { navController.popBackStack() },
+                                onVerActividades = {
+                                    // lista de actividades (siguiente paso)
                                 }
-                            ) { contentModifier ->
-                                SenderoScreen(
-                                    onNivelClick = { /* detalle de nivel (siguiente paso) */ }
-                                )
-                            }
+                            )
                         }
-                        composable(NutriRoutes.JUEGOS) {
-                            TabScaffold(
-                                tabActiva = tabActiva,
-                                onTab = { tab ->
-                                    tabActiva = tab
-                                    navController.navigate(
-                                        when (tab) {
-                                            "home" -> NutriRoutes.HOME
-                                            "sendero" -> NutriRoutes.SENDERO
-                                            "juegos" -> NutriRoutes.JUEGOS
-                                            "perfil" -> NutriRoutes.PERFIL
-                                            else -> NutriRoutes.HOME
-                                        }
-                                    )
-                                }
-                            ) { contentModifier ->
-                                JuegosScreen()
-                            }
-                        }
-                        composable(NutriRoutes.PERFIL) {
-                            TabScaffold(
-                                tabActiva = tabActiva,
-                                onTab = { tab ->
-                                    tabActiva = tab
-                                    navController.navigate(
-                                        when (tab) {
-                                            "home" -> NutriRoutes.HOME
-                                            "sendero" -> NutriRoutes.SENDERO
-                                            "juegos" -> NutriRoutes.JUEGOS
-                                            "perfil" -> NutriRoutes.PERFIL
-                                            else -> NutriRoutes.HOME
-                                        }
-                                    )
-                                }
-                            ) { contentModifier ->
-                                PerfilScreen(
-                                    nombre = nombreUsuario,
-                                    onVerRecompensas = {}
-                                )
-                            }
+                        composable(NutriRoutes.RECOMPENSAS) {
+                            androidx.compose.material3.Text("Recompensas (próximamente)")
                         }
                     }
                 }
