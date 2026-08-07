@@ -17,6 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.codidevs.nutriapp.data.models.CatalogoAlimentos
+import com.codidevs.nutriapp.data.models.GruposAlimenticios
+import com.codidevs.nutriapp.ui.actividades.DescubreAlimentosScreen
+import com.codidevs.nutriapp.ui.actividades.GrupoPerteneceScreen
+import com.codidevs.nutriapp.ui.actividades.PremioScreen
 import com.codidevs.nutriapp.ui.components.TabScaffold
 import com.codidevs.nutriapp.ui.home.HomeScreen
 import com.codidevs.nutriapp.ui.juegos.JuegosScreen
@@ -26,6 +31,8 @@ import com.codidevs.nutriapp.ui.onboarding.ModulosScreen
 import com.codidevs.nutriapp.ui.onboarding.RegistroScreen
 import com.codidevs.nutriapp.ui.onboarding.SplashScreen
 import com.codidevs.nutriapp.ui.perfil.PerfilScreen
+import com.codidevs.nutriapp.ui.sendero.ACTIVIDADES_NIVEL_1
+import com.codidevs.nutriapp.ui.sendero.ActividadesScreen
 import com.codidevs.nutriapp.ui.sendero.NIVELES_INFO
 import com.codidevs.nutriapp.ui.sendero.NivelDetalleScreen
 import com.codidevs.nutriapp.ui.sendero.SenderoScreen
@@ -150,8 +157,56 @@ class MainActivity : ComponentActivity() {
                                 nivel = nivel,
                                 onBack = { navController.popBackStack() },
                                 onVerActividades = {
-                                    // lista de actividades (siguiente paso)
+                                    navController.navigate(
+                                        "${NutriRoutes.ACTIVIDADES}/${nivel.numero}"
+                                    )
                                 }
+                            )
+                        }
+                        composable(
+                            "${NutriRoutes.ACTIVIDADES}/{nivelId}"
+                        ) { backStackEntry ->
+                            val nivelId = backStackEntry.arguments?.getString("nivelId")
+                                ?.toIntOrNull() ?: 1
+                            ActividadesScreen(
+                                nivelNumero = nivelId,
+                                onBack = { navController.popBackStack() },
+                                onActividadClick = { actividad ->
+                                    when (actividad.id) {
+                                        1 -> navController.navigate(NutriRoutes.ACTIVIDAD_DESCUBRE)
+                                        2 -> navController.navigate(NutriRoutes.ACTIVIDAD_GRUPO)
+                                        // 3-7: minijuegos (siguientes pasos)
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_DESCUBRE) {
+                            DescubreAlimentosScreen(
+                                alimentos = CatalogoAlimentos.TODOS,
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    // El premio reemplaza al minijuego en el stack,
+                                    // así "Continuar" regresa a la lista de actividades
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_DESCUBRE) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_GRUPO) {
+                            GrupoPerteneceScreen(
+                                grupos = GruposAlimenticios.TODOS,
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_GRUPO) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.PREMIO) {
+                            PremioScreen(
+                                onContinuar = { navController.popBackStack() }
                             )
                         }
                         composable(NutriRoutes.RECOMPENSAS) {
