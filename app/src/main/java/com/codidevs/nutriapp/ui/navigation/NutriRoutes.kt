@@ -6,4 +6,8 @@ object NutriRoutes {
     const val IMC = "imc"
     const val MODULOS = "modulos"
     const val HOME = "home"
+    const val SENDERO = "sendero"
+    const val JUEGOS = "juegos"
+    const val RECOMPENSAS = "recompensas"
+    const val PERFIL = "perfil"
 }

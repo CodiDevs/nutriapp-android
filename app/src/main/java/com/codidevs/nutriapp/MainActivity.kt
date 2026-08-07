@@ -9,16 +9,24 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.codidevs.nutriapp.ui.components.TabScaffold
+import com.codidevs.nutriapp.ui.home.HomeScreen
+import com.codidevs.nutriapp.ui.juegos.JuegosScreen
 import com.codidevs.nutriapp.ui.navigation.NutriRoutes
 import com.codidevs.nutriapp.ui.onboarding.ImcScreen
 import com.codidevs.nutriapp.ui.onboarding.ModulosScreen
 import com.codidevs.nutriapp.ui.onboarding.RegistroScreen
 import com.codidevs.nutriapp.ui.onboarding.SplashScreen
-import com.codidevs.nutriapp.ui.theme.BgApp
+import com.codidevs.nutriapp.ui.perfil.PerfilScreen
+import com.codidevs.nutriapp.ui.sendero.SenderoScreen
 import com.codidevs.nutriapp.ui.theme.NutriAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,6 +42,9 @@ class MainActivity : ComponentActivity() {
             NutriAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
+                    var nombreUsuario by remember { mutableStateOf("") }
+                    var tabActiva by remember { mutableStateOf("home") }
+
                     NavHost(
                         navController = navController,
                         startDestination = NutriRoutes.SPLASH,
@@ -86,17 +97,113 @@ class MainActivity : ComponentActivity() {
                                 nombre = nombre,
                                 onBack = { navController.popBackStack() },
                                 onNutricion = {
-                                    navController.navigate("${NutriRoutes.HOME}/${Uri.encode(nombre)}")
+                                    nombreUsuario = nombre
+                                    tabActiva = "home"
+                                    navController.navigate(NutriRoutes.HOME)
                                 }
                             )
                         }
-                        composable(
-                            "${NutriRoutes.HOME}/{nombre}"
-                        ) { backStackEntry ->
-                            val nombre = backStackEntry.arguments?.getString("nombre").orEmpty()
-                            androidx.compose.material3.Text(
-                                "Home de $nombre (próximamente)"
-                            )
+                        composable(NutriRoutes.HOME) {
+                            TabScaffold(
+                                tabActiva = tabActiva,
+                                onTab = { tab ->
+                                    tabActiva = tab
+                                    navController.navigate(
+                                        when (tab) {
+                                            "home" -> NutriRoutes.HOME
+                                            "sendero" -> NutriRoutes.SENDERO
+                                            "juegos" -> NutriRoutes.JUEGOS
+                                            "perfil" -> NutriRoutes.PERFIL
+                                            else -> NutriRoutes.HOME
+                                        }
+                                    )
+                                }
+                            ) { contentModifier ->
+                                when (tabActiva) {
+                                    "sendero" -> SenderoScreen(
+                                        onNivelClick = { /* detalle de nivel (siguiente paso) */ }
+                                    )
+                                    "juegos" -> JuegosScreen()
+                                    "perfil" -> PerfilScreen(
+                                        nombre = nombreUsuario,
+                                        onVerRecompensas = {}
+                                    )
+                                    else -> HomeScreen(
+                                        nombre = nombreUsuario,
+                                        onSendero = {
+                                            tabActiva = "sendero"
+                                            navController.navigate(NutriRoutes.SENDERO)
+                                        },
+                                        onRecompensas = { /* recompensas (siguiente paso) */ },
+                                        onPerfil = {
+                                            tabActiva = "perfil"
+                                            navController.navigate(NutriRoutes.PERFIL)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        composable(NutriRoutes.SENDERO) {
+                            TabScaffold(
+                                tabActiva = tabActiva,
+                                onTab = { tab ->
+                                    tabActiva = tab
+                                    navController.navigate(
+                                        when (tab) {
+                                            "home" -> NutriRoutes.HOME
+                                            "sendero" -> NutriRoutes.SENDERO
+                                            "juegos" -> NutriRoutes.JUEGOS
+                                            "perfil" -> NutriRoutes.PERFIL
+                                            else -> NutriRoutes.HOME
+                                        }
+                                    )
+                                }
+                            ) { contentModifier ->
+                                SenderoScreen(
+                                    onNivelClick = { /* detalle de nivel (siguiente paso) */ }
+                                )
+                            }
+                        }
+                        composable(NutriRoutes.JUEGOS) {
+                            TabScaffold(
+                                tabActiva = tabActiva,
+                                onTab = { tab ->
+                                    tabActiva = tab
+                                    navController.navigate(
+                                        when (tab) {
+                                            "home" -> NutriRoutes.HOME
+                                            "sendero" -> NutriRoutes.SENDERO
+                                            "juegos" -> NutriRoutes.JUEGOS
+                                            "perfil" -> NutriRoutes.PERFIL
+                                            else -> NutriRoutes.HOME
+                                        }
+                                    )
+                                }
+                            ) { contentModifier ->
+                                JuegosScreen()
+                            }
+                        }
+                        composable(NutriRoutes.PERFIL) {
+                            TabScaffold(
+                                tabActiva = tabActiva,
+                                onTab = { tab ->
+                                    tabActiva = tab
+                                    navController.navigate(
+                                        when (tab) {
+                                            "home" -> NutriRoutes.HOME
+                                            "sendero" -> NutriRoutes.SENDERO
+                                            "juegos" -> NutriRoutes.JUEGOS
+                                            "perfil" -> NutriRoutes.PERFIL
+                                            else -> NutriRoutes.HOME
+                                        }
+                                    )
+                                }
+                            ) { contentModifier ->
+                                PerfilScreen(
+                                    nombre = nombreUsuario,
+                                    onVerRecompensas = {}
+                                )
+                            }
                         }
                     }
                 }
