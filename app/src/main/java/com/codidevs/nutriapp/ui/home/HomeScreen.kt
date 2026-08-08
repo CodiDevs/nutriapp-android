@@ -1,8 +1,10 @@
 package com.codidevs.nutriapp.ui.home
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -16,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
+import com.codidevs.nutriapp.ui.theme.LeafDark
+import com.codidevs.nutriapp.ui.theme.LeafLight
+import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoDark
 import com.codidevs.nutriapp.ui.theme.MangoLight
@@ -23,6 +28,7 @@ import com.codidevs.nutriapp.ui.theme.MangoLight
 @Composable
 fun HomeScreen(
     nombre: String,
+    nivelTexto: String,
     onSendero: () -> Unit,
     onRecompensas: () -> Unit,
     onPerfil: () -> Unit
@@ -35,7 +41,7 @@ fun HomeScreen(
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // Saludo y nivel
+        // Saludo y nivel/módulo reales
         Text(
             text = "Buenos días, $nombre",
             style = MaterialTheme.typography.headlineSmall,
@@ -44,9 +50,10 @@ fun HomeScreen(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "Nivel 1 · Nutrición",
+            text = nivelTexto,
             style = MaterialTheme.typography.bodyLarge,
-            color = InkSoft
+            color = InkSoft,
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(Modifier.height(24.dp))
@@ -90,10 +97,10 @@ fun HomeScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // Accesos rápidos: Recompensas y Perfil
+        // Accesos rápidos: Recompensas y Perfil (estilo minijuegos)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             AccessCard(
                 emoji = "🎁",
@@ -108,6 +115,41 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        Spacer(Modifier.height(24.dp))
+
+        // Figura decorativa para niños
+        Surface(
+            color = LeafLight,
+            shape = RoundedCornerShape(22.dp),
+            border = BorderStroke(2.dp, LeafDark.copy(alpha = 0.3f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "🦸", fontSize = 44.sp)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "¡Tú puedes, superhéroe de la salud!",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = LeafDark
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "Sigue aprendiendo y ganando monedas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = InkSoft,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
     }
 }
 
@@ -118,25 +160,36 @@ private fun AccessCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(2.dp, Color(0xFFE7E0CC)),
-        shape = RoundedCornerShape(20.dp),
-        modifier = modifier.height(120.dp)
+    Surface(
+        color = Color.White,
+        shape = RoundedCornerShape(22.dp),
+        border = BorderStroke(2.dp, LineColor),
+        shadowElevation = 3.dp,
+        modifier = modifier
+            .height(120.dp)
+            .clickable(onClick = onClick)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = emoji, fontSize = 34.sp)
+            // Círculo con el emoji (como en los minijuegos)
+            Surface(
+                color = LeafLight,
+                shape = CircleShape,
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = emoji, fontSize = 26.sp)
+                }
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 text = texto,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Ink,
+                color = LeafDark,
                 textAlign = TextAlign.Center
             )
         }

@@ -1,6 +1,7 @@
 package com.codidevs.nutriapp.ui.perfil
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -10,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -19,42 +19,33 @@ import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.LeafDark
+import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoDark
 import com.codidevs.nutriapp.ui.theme.Sky
+import com.codidevs.nutriapp.data.models.MedallaInfo
 
-private data class StatPerfil(
-    val valor: String,
-    val etiqueta: String
-)
-
-private val STATS = listOf(
-    StatPerfil("240", "Monedas"),
-    StatPerfil("6", "Actividades"),
-    StatPerfil("18", "Correctas"),
-    StatPerfil("32 min", "Aprendido"),
-    StatPerfil("5 días", "Racha"),
-    StatPerfil("1", "Medallas")
-)
-
-private data class Medalla(
-    val emoji: String,
-    val nombre: String,
-    val bloqueada: Boolean = false
-)
-
-private val MEDALLAS = listOf(
-    Medalla("🥇", "Explorador de frutas"),
-    Medalla("🥇", "Rey de verduras", bloqueada = true),
-    Medalla("🥇", "Campeón del agua", bloqueada = true)
-)
-
+/**
+ * Pantalla de Perfil: muestra las stats, la medalla de perfil (la más reciente
+ * desbloqueada o la elegida), y las medallas desbloqueadas con opción de poner en el perfil.
+ */
 @Composable
 fun PerfilScreen(
     nombre: String,
+    nivel: Int,
+    medallas: List<MedallaInfo>,
+    medallaPerfil: String, // id de la medalla puesta en el perfil ("" = ninguna)
+    onPonerMedalla: (String) -> Unit,
     onVerRecompensas: () -> Unit
 ) {
+    // La medalla que se muestra en la cabecera: la elegida, o la más reciente desbloqueada
+    val medallaMostrada = medallas.firstOrNull { it.id == medallaPerfil }
+        ?: medallas.filter { it.desbloqueada }.maxByOrNull { it.orden }
+    val desbloqueadas = medallas.filter { it.desbloqueada }
+    // Mostrar opción de "poner en perfil" para la medalla tocada
+    var medallaSeleccionada by remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -86,66 +77,113 @@ fun PerfilScreen(
                     fontWeight = FontWeight.Bold,
                     color = Ink
                 )
-                Text(
-                    text = "Nivel 1 · Explorador de alimentos",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = InkSoft,
-                    fontWeight = FontWeight.Bold
-                )
+                // Nivel + medalla de perfil (la figura sin tarjeta, al lado del texto)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Nivel $nivel · ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = InkSoft,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (medallaMostrada != null) {
+                        Text(
+                            text = medallaMostrada.emoji,
+                            fontSize = 22.sp
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = medallaMostrada.nombre,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = InkSoft,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Text(
+                            text = "Explorador de alimentos",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = InkSoft,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        // Estadísticas
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatGridCell(STATS[0].valor, STATS[0].etiqueta, Modifier.weight(1f))
-            StatGridCell(STATS[1].valor, STATS[1].etiqueta, Modifier.weight(1f))
-            StatGridCell(STATS[2].valor, STATS[2].etiqueta, Modifier.weight(1f))
-        }
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatGridCell(STATS[3].valor, STATS[3].etiqueta, Modifier.weight(1f))
-            StatGridCell(STATS[4].valor, STATS[4].etiqueta, Modifier.weight(1f))
-            StatGridCell(STATS[5].valor, STATS[5].etiqueta, Modifier.weight(1f))
-        }
+        // Mis medallas (tarjetas estilo minijuegos, más grandes)
+        Text(
+            text = "Mis medallas",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Ink
+        )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // Mis medallas
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Mis medallas",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Ink
-            )
-            Text(
-                text = "Ver todas →",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = Sky
-            )
+        Text(
+            text = "Toca una medalla para ponerla en tu perfil",
+            style = MaterialTheme.typography.bodySmall,
+            color = InkSoft,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        // Grilla 2x2 de medallas desbloqueadas (todas, incluida la especial)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            desbloqueadas.chunked(2).forEach { fila ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    fila.forEach { medalla ->
+                        MedalCell(
+                            medalla = medalla,
+                            esPerfil = medalla.id == medallaPerfil,
+                            modifier = Modifier.weight(1f),
+                            onClick = { medallaSeleccionada = medalla.id }
+                        )
+                    }
+                    if (fila.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
         }
 
-        Spacer(Modifier.height(10.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            MEDALLAS.forEach { medalla ->
-                MedalCell(medalla, Modifier.weight(1f))
+        // Opción de poner en perfil (cuando se toca una medalla)
+        medallaSeleccionada?.let { id ->
+            val medalla = medallas.firstOrNull { it.id == id }
+            Spacer(Modifier.height(12.dp))
+            Surface(
+                color = LeafLight,
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, LeafDark.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "${medalla?.emoji ?: ""} ${medalla?.nombre ?: ""}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = LeafDark
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            onPonerMedalla(id)
+                            medallaSeleccionada = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = LeafDark),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                    ) {
+                        Text(
+                            text = "Poner en el perfil",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
 
@@ -171,61 +209,45 @@ fun PerfilScreen(
 }
 
 @Composable
-private fun StatGridCell(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
+private fun MedalCell(
+    medalla: MedallaInfo,
+    esPerfil: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Surface(
-        color = Color.White,
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(2.dp, LineColor),
+        color = if (esPerfil) LeafLight else Color.White,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(if (esPerfil) 3.dp else 2.dp, if (esPerfil) LeafDark else LineColor),
+        shadowElevation = 3.dp,
         modifier = modifier
+            .height(110.dp)
+            .clickable(onClick = onClick)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = valor,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = LeafDark
-            )
-            Text(
-                text = etiqueta,
-                style = MaterialTheme.typography.labelSmall,
-                color = InkSoft,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
-private fun MedalCell(medalla: Medalla, modifier: Modifier = Modifier) {
-    Surface(
-        color = Color.White,
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(2.dp, LineColor),
-        modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = medalla.emoji,
-                fontSize = 26.sp,
-                modifier = Modifier.alpha(if (medalla.bloqueada) 0.45f else 1f)
-            )
+            Text(text = medalla.emoji, fontSize = 34.sp)
+            Spacer(Modifier.height(6.dp))
             Text(
                 text = medalla.nombre,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (medalla.bloqueada) InkSoft.copy(alpha = 0.5f) else Ink,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                color = Ink,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 6.dp)
             )
+            if (esPerfil) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "✓ En perfil",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = LeafDark
+                )
+            }
         }
     }
 }

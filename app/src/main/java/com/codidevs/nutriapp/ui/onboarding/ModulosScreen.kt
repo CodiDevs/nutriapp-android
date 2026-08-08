@@ -22,13 +22,18 @@ import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoLight
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Locked
+import com.codidevs.nutriapp.ui.theme.Sky
 import com.codidevs.nutriapp.ui.theme.BgApp
 
 @Composable
 fun ModulosScreen(
     nombre: String,
+    nutricionCompletado: Boolean,
+    actividadCompletado: Boolean,
+    nivelNutricion: Int, // nivel actual en el módulo de nutrición (1-3)
     onBack: () -> Unit,
-    onNutricion: () -> Unit
+    onNutricion: () -> Unit,
+    onActividadFisica: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -84,9 +89,13 @@ fun ModulosScreen(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Nivel 1 de 7 · en progreso",
+                            text = if (nutricionCompletado)
+                                "Completado ✓"
+                            else
+                                "Nivel $nivelNutricion de 3",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = InkSoft
+                            color = if (nutricionCompletado) LeafDark else InkSoft,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                     Box(
@@ -98,10 +107,11 @@ fun ModulosScreen(
                 }
             }
 
-            // Módulo de Actividad física (bloqueado)
+            // Módulo de Actividad física (disponible)
             Card(
+                onClick = onActividadFisica,
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(2.dp, Locked.copy(alpha = 0.6f)),
+                border = BorderStroke(2.dp, Sky),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth().height(96.dp)
             ) {
@@ -124,20 +134,24 @@ fun ModulosScreen(
                             text = "Actividad física",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = InkSoft
+                            color = LeafDark
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Se desbloquea en el nivel 4",
+                            text = if (actividadCompletado)
+                                "Completado ✓"
+                            else
+                                "Niveles 4 a 7 · ¡Muévete!",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = InkSoft
+                            color = if (actividadCompletado) LeafDark else InkSoft,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                     Box(
                         modifier = Modifier.size(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "🔒", fontSize = 20.sp)
+                        Text(text = "▶", fontSize = 20.sp, color = LeafDark)
                     }
                 }
             }
