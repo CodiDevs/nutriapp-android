@@ -23,6 +23,7 @@ import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
+import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Locked
 import com.codidevs.nutriapp.ui.theme.Mango
@@ -49,9 +50,41 @@ private val NIVELES = listOf(
 
 @Composable
 fun SenderoScreen(
-    onNivelClick: (Int) -> Unit
+    modulo: Int, // 1 = Nutrición (niveles 1-3), 2 = Actividad física (niveles 4-7)
+    nivelesDesbloqueados: Int, // cuántos niveles están desbloqueados (1+)
+    onNivelClick: (Int) -> Unit,
+    onElegirModulo: () -> Unit,
+    onCambiarModulo: () -> Unit
 ) {
     var mostrarBloqueado by remember { mutableStateOf(false) }
+
+    // Niveles según el módulo
+    val rango = if (modulo == 1) 1..3 else 4..7
+    val titulo = if (modulo == 1) "Sendero de Nutrición" else "Sendero de Actividad Física"
+    val emojiMascota = if (modulo == 1) "🍎" else "🏃"
+    val mensajeMascota = if (modulo == 1)
+        "¡Sigamos aprendiendo sobre los alimentos!"
+    else
+        "¡Muévete, juega y cuida tu cuerpo!"
+
+    // Niveles del módulo: el primero siempre disponible; los siguientes según el progreso
+    val niveles = remember(modulo, nivelesDesbloqueados) {
+        NIVELES.filter { it.numero in rango }.map { nivel ->
+            // Para el módulo 2, el nivel 4 se considera desbloqueado al entrar al módulo
+            val desbloqueado = if (modulo == 2) {
+                nivel.numero == rango.first || nivel.numero <= nivelesDesbloqueados
+            } else {
+                nivel.numero <= nivelesDesbloqueados
+            }
+            nivel.copy(
+                bloqueado = !desbloqueado,
+                actual = if (modulo == 2) nivel.numero == nivelesDesbloqueados.coerceIn(rango) else nivel.numero == nivelesDesbloqueados
+            )
+        }
+    }
+
+    // El módulo está completo si el último nivel del rango está desbloqueado
+    val moduloCompleto = nivelesDesbloqueados >= rango.last
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -63,7 +96,7 @@ fun SenderoScreen(
             Spacer(Modifier.height(4.dp))
 
             Text(
-                text = "Sendero de Nutrición",
+                text = titulo,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = Ink
@@ -71,21 +104,31 @@ fun SenderoScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // Globo de la mascota
+            // Globo de la mascota (burbuja bonita)
             Surface(
                 color = Color.White,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 border = BorderStroke(2.dp, Sky),
+                shadowElevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "🍎", fontSize = 32.sp)
-                    Spacer(Modifier.width(10.dp))
+                    // Círculo con la mascota
+                    Surface(
+                        color = Sky.copy(alpha = 0.15f),
+                        shape = CircleShape,
+                        modifier = Modifier.size(52.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(text = emojiMascota, fontSize = 28.sp)
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
                     Text(
-                        text = "¡Sigamos aprendiendo sobre los alimentos!",
+                        text = mensajeMascota,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = Ink
@@ -96,7 +139,7 @@ fun SenderoScreen(
             Spacer(Modifier.height(20.dp))
 
             // Nodos del sendero en zigzag
-            NIVELES.forEach { nivel ->
+            niveles.forEach { nivel ->
                 NodoNivel(
                     nivel = nivel,
                     onClick = {
@@ -108,6 +151,40 @@ fun SenderoScreen(
                     },
                     reversed = nivel.numero % 2 == 0
                 )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // Botón para elegir el siguiente módulo (cuando este módulo está completo)
+            if (moduloCompleto && modulo == 1) {
+                Button(
+                    onClick = onElegirModulo,
+                    colors = ButtonDefaults.buttonColors(containerColor = Mango),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) {
+                    Text(
+                        text = "Elegir el siguiente módulo →",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White
+                    )
+                }
+            }
+
+            // Botón para cambiar de módulo (visible en el módulo 2, y en el 1 si está completo)
+            if (modulo == 2 || moduloCompleto) {
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = onCambiarModulo,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) {
+                    Text(
+                        text = if (modulo == 1) "Ver módulos" else "Cambiar a Nutrición 🌱",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = LeafDark
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -187,30 +264,45 @@ private fun Nodo(nivel: NivelSendero, onClick: () -> Unit) {
 private fun Etiqueta(nivel: NivelSendero, modifier: Modifier = Modifier) {
     Surface(
         color = Color.White,
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(2.dp, LineColor),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(2.dp, if (nivel.bloqueado) LineColor else Leaf.copy(alpha = 0.4f)),
+        shadowElevation = 3.dp,
         modifier = modifier
     ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-            Text(
-                text = "Nivel ${nivel.numero}",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = Ink
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = nivel.titulo,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (nivel.bloqueado) InkSoft.copy(alpha = 0.7f) else LeafDark,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = nivel.descripcion,
-                style = MaterialTheme.typography.bodySmall,
-                color = InkSoft
-            )
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Círculo con el número del nivel
+            Surface(
+                color = if (nivel.bloqueado) Locked.copy(alpha = 0.4f) else LeafLight,
+                shape = CircleShape,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "${nivel.numero}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (nivel.bloqueado) InkSoft else LeafDark
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = nivel.titulo,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (nivel.bloqueado) InkSoft.copy(alpha = 0.7f) else LeafDark
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = nivel.descripcion,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = InkSoft
+                )
+            }
         }
     }
 }

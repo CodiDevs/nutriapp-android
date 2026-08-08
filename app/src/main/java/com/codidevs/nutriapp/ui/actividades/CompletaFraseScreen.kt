@@ -27,8 +27,9 @@ import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoDark
+import com.codidevs.nutriapp.data.models.FraseNivel2
 
-private data class FraseIncompleta(
+data class FraseIncompleta(
     val emoji: String,
     val fraseAntes: String,
     val fraseDespues: String,
@@ -37,7 +38,7 @@ private data class FraseIncompleta(
 )
 
 /** 9 frases incompletas del Módulo 1 (y algunas de hábitos), según las indicaciones. */
-private val FRASES = listOf(
+val FRASES_NIVEL1 = listOf(
     FraseIncompleta("🍎", "Las frutas tienen muchas", ".", "vitaminas", listOf("vitaminas", "proteínas", "grasas", "minerales")),
     FraseIncompleta("🥩", "La carne tiene muchas", ".", "proteínas", listOf("vitaminas", "proteínas", "calcio", "fibra")),
     FraseIncompleta("🥛", "La leche tiene mucho", ".", "calcio", listOf("calcio", "hierro", "azúcar", "sodio")),
@@ -55,6 +56,7 @@ private val FRASES = listOf(
  */
 @Composable
 fun CompletaFraseScreen(
+    frases: List<FraseIncompleta>,
     onBack: () -> Unit,
     onTerminada: (puntaje: Int) -> Unit
 ) {
@@ -62,7 +64,7 @@ fun CompletaFraseScreen(
     var puntaje by remember { mutableStateOf(0) }
     var seleccionada by remember { mutableStateOf<String?>(null) }
 
-    val frase = FRASES[indice]
+    val frase = frases[indice]
     val opcionesBarajadas = remember(indice) { frase.opciones.shuffled() }
     val esCorrecto = seleccionada == frase.respuesta
 
@@ -76,13 +78,13 @@ fun CompletaFraseScreen(
         Spacer(Modifier.height(12.dp))
 
         Text(
-            text = "${indice + 1} de ${FRASES.size}",
+            text = "${indice + 1} de ${frases.size}",
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = InkSoft
         )
         LinearProgressIndicator(
-            progress = { (indice + 1).toFloat() / FRASES.size },
+            progress = { (indice + 1).toFloat() / frases.size },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp),
@@ -194,7 +196,7 @@ fun CompletaFraseScreen(
 
             Button(
                 onClick = {
-                    if (indice + 1 >= FRASES.size) {
+                    if (indice + 1 >= frases.size) {
                         onTerminada(puntaje)
                     } else {
                         indice++
@@ -206,7 +208,7 @@ fun CompletaFraseScreen(
                 modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 Text(
-                    text = if (indice + 1 >= FRASES.size) "Ver resultados" else "Siguiente →",
+                    text = if (indice + 1 >= frases.size) "Ver resultados" else "Siguiente →",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White
                 )

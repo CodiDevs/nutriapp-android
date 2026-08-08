@@ -43,10 +43,13 @@ val ACTIVIDADES_NIVEL_1 = listOf(
 @Composable
 fun ActividadesScreen(
     nivelNumero: Int,
+    actividades: List<ActividadInfo>,
+    completadas: Set<Int>,
     onBack: () -> Unit,
-    onActividadClick: (ActividadInfo) -> Unit
+    onActividadClick: (ActividadInfo) -> Unit,
+    onNivelCompletado: () -> Unit
 ) {
-    val actividades = ACTIVIDADES_NIVEL_1
+    val nivelCompleto = actividades.all { it.id in completadas }
 
     Column(
         modifier = Modifier
@@ -63,7 +66,26 @@ fun ActividadesScreen(
                 FilaActividad(
                     numero = index + 1,
                     actividad = actividad,
+                    completada = actividad.id in completadas,
                     onClick = { onActividadClick(actividad) }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Botón de nivel completado: "Siguiente" (o "Finalizar" en el nivel 7)
+        if (nivelCompleto) {
+            Button(
+                onClick = onNivelCompletado,
+                colors = ButtonDefaults.buttonColors(containerColor = Leaf),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text(
+                    text = if (nivelNumero >= 7) "Finalizar" else "Siguiente →",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White
                 )
             }
         }
@@ -76,12 +98,13 @@ fun ActividadesScreen(
 private fun FilaActividad(
     numero: Int,
     actividad: ActividadInfo,
+    completada: Boolean,
     onClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(2.dp, LineColor),
+        border = BorderStroke(2.dp, if (completada) Leaf else LineColor),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -93,7 +116,7 @@ private fun FilaActividad(
         ) {
             // Ícono en círculo (verde si completada, verde suave si pendiente)
             Surface(
-                color = if (actividad.completada) Leaf else LeafLight,
+                color = if (completada) Leaf else LeafLight,
                 shape = RoundedCornerShape(50),
                 modifier = Modifier.size(40.dp)
             ) {
@@ -113,14 +136,14 @@ private fun FilaActividad(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = if (actividad.completada) "Completada" else "Pendiente",
+                    text = if (completada) "Completada" else "Pendiente",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (actividad.completada) LeafDark else InkSoft
+                    color = if (completada) LeafDark else InkSoft
                 )
             }
 
-            if (actividad.completada) {
+            if (completada) {
                 Text(text = "✓", fontSize = 18.sp, color = LeafDark)
             }
         }

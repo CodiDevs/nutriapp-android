@@ -21,15 +21,10 @@ import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
-
-private data class PreguntaVF(
-    val emoji: String,
-    val enunciado: String,
-    val esVerdadero: Boolean
-)
+import com.codidevs.nutriapp.data.models.PreguntaVF
 
 /** 8 preguntas de Verdadero/Falso del Módulo 1 (Nutrición), según las indicaciones. */
-private val PREGUNTAS_VF = listOf(
+val PREGUNTAS_VF_NIVEL1 = listOf(
     PreguntaVF("🍎", "Las frutas tienen muchas vitaminas.", true),
     PreguntaVF("🥛", "La leche ayuda a fortalecer los huesos.", true),
     PreguntaVF("🍬", "Comer dulces todos los días es bueno para la salud.", false),
@@ -46,6 +41,7 @@ private val PREGUNTAS_VF = listOf(
  */
 @Composable
 fun VerdaderoFalsoScreen(
+    preguntas: List<PreguntaVF>,
     onBack: () -> Unit,
     onTerminada: (puntaje: Int) -> Unit
 ) {
@@ -53,7 +49,7 @@ fun VerdaderoFalsoScreen(
     var puntaje by remember { mutableStateOf(0) }
     var respuesta by remember { mutableStateOf<Boolean?>(null) }
 
-    val pregunta = PREGUNTAS_VF[indice]
+    val pregunta = preguntas[indice]
     val respondio = respuesta != null
     val esCorrecto = respuesta == pregunta.esVerdadero
 
@@ -67,13 +63,13 @@ fun VerdaderoFalsoScreen(
         Spacer(Modifier.height(12.dp))
 
         Text(
-            text = "${indice + 1} de ${PREGUNTAS_VF.size}",
+            text = "${indice + 1} de ${preguntas.size}",
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = InkSoft
         )
         LinearProgressIndicator(
-            progress = { (indice + 1).toFloat() / PREGUNTAS_VF.size },
+            progress = { (indice + 1).toFloat() / preguntas.size },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp),
@@ -184,7 +180,7 @@ fun VerdaderoFalsoScreen(
 
             Button(
                 onClick = {
-                    if (indice + 1 >= PREGUNTAS_VF.size) {
+                    if (indice + 1 >= preguntas.size) {
                         onTerminada(puntaje)
                     } else {
                         indice++
@@ -196,7 +192,7 @@ fun VerdaderoFalsoScreen(
                 modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 Text(
-                    text = if (indice + 1 >= PREGUNTAS_VF.size) "Ver resultados" else "Siguiente →",
+                    text = if (indice + 1 >= preguntas.size) "Ver resultados" else "Siguiente →",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White
                 )

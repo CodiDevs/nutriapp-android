@@ -29,21 +29,9 @@ private data class CartaMemoria(
     val texto: String
 )
 
-private data class ParMemoria(
+data class ParMemoria(
     val emoji: String,
     val texto: String
-)
-
-/** 8 parejas de la actividad "Memoria nutritiva" según las indicaciones. */
-private val PARES_MEMORIA = listOf(
-    ParMemoria("🍗", "Proteínas"),
-    ParMemoria("🥛", "Calcio"),
-    ParMemoria("🍎", "Vitaminas"),
-    ParMemoria("🥦", "Fibra"),
-    ParMemoria("🍞", "Energía"),
-    ParMemoria("🐟", "Omega-3"),
-    ParMemoria("🫘", "Proteínas vegetales"),
-    ParMemoria("🥜", "Grasas saludables")
 )
 
 /**
@@ -52,12 +40,13 @@ private val PARES_MEMORIA = listOf(
  */
 @Composable
 fun MemoriaNutritivaScreen(
+    pares: List<ParMemoria>,
     onBack: () -> Unit,
     onTerminada: (puntaje: Int) -> Unit
 ) {
-    // Baraja las 16 cartas (8 parejas)
-    val cartas = remember {
-        PARES_MEMORIA.flatMapIndexed { i, par ->
+    // Baraja las cartas (2 por pareja)
+    val cartas = remember(pares) {
+        pares.flatMapIndexed { i, par ->
             listOf(
                 CartaMemoria(i * 2, par.emoji, par.texto),
                 CartaMemoria(i * 2 + 1, par.emoji, par.texto)
@@ -129,7 +118,7 @@ fun MemoriaNutritivaScreen(
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Parejas: $parejasEncontradas / ${PARES_MEMORIA.size}",
+            text = "Parejas: $parejasEncontradas / ${pares.size}",
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = LeafDark,
@@ -159,7 +148,7 @@ fun MemoriaNutritivaScreen(
         Spacer(Modifier.height(20.dp))
 
         // Botón terminar cuando se encuentran todas
-        if (parejasEncontradas == PARES_MEMORIA.size) {
+        if (parejasEncontradas == pares.size) {
             Button(
                 onClick = { onTerminada(puntaje) },
                 colors = ButtonDefaults.buttonColors(containerColor = Leaf),

@@ -1,5 +1,7 @@
 package com.codidevs.nutriapp.ui.actividades
 
+import android.media.AudioManager
+import android.media.ToneGenerator
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -46,21 +48,11 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
-private data class AlimentoRuleta(
+data class AlimentoRuleta(
     val emoji: String,
     val nombre: String,
     val aporte: String,
     val opciones: List<String>
-)
-
-/** Alimentos de la rueda con su pregunta "¿Qué aporta?", según las indicaciones. */
-private val ALIMENTOS_RULETA = listOf(
-    AlimentoRuleta("🥚", "Huevo", "Proteínas", listOf("Proteínas", "Mucha azúcar", "Solo agua", "Nada")),
-    AlimentoRuleta("🍎", "Manzana", "Vitaminas", listOf("Vitaminas", "Mucha azúcar", "Solo agua", "Nada")),
-    AlimentoRuleta("🥛", "Leche", "Calcio", listOf("Calcio", "Grasas", "Solo agua", "Nada")),
-    AlimentoRuleta("🍞", "Pan", "Energía", listOf("Energía", "Proteínas", "Solo agua", "Nada")),
-    AlimentoRuleta("🥦", "Brócoli", "Fibra", listOf("Fibra", "Mucha azúcar", "Solo agua", "Nada")),
-    AlimentoRuleta("🐟", "Pescado", "Omega-3", listOf("Omega-3", "Mucha azúcar", "Solo agua", "Nada"))
 )
 
 private val COLORES_RULETA = listOf(
@@ -73,6 +65,7 @@ private val COLORES_RULETA = listOf(
  */
 @Composable
 fun RuedaAlimentacionScreen(
+    alimentos: List<AlimentoRuleta>,
     onBack: () -> Unit,
     onTerminada: (puntaje: Int) -> Unit
 ) {
@@ -85,7 +78,17 @@ fun RuedaAlimentacionScreen(
     // Partículas decorativas que se mueven mientras gira la ruleta
     var particulas by remember { mutableStateOf<List<ParticulaRuleta>>(emptyList()) }
 
-    val alimento = ALIMENTOS_RULETA[indice]
+    // Generador de tonos reutilizable (crear uno por giro causaba lag)
+    val toneGenerator = remember {
+        try { ToneGenerator(AudioManager.STREAM_MUSIC, 60) } catch (_: Exception) { null }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            try { toneGenerator?.release() } catch (_: Exception) { }
+        }
+    }
+
+    val alimento = alimentos[indice]
     val respondio = seleccionada != null
     val esCorrecto = seleccionada == alimento.aporte
     // Opciones barajadas en cada ronda para que cambien de posición
@@ -94,16 +97,18 @@ fun RuedaAlimentacionScreen(
     // Animación: la ruleta crece mientras gira (zoom) y vuelve a su tamaño al detenerse
     LaunchedEffect(indice) {
         girando = true
+        // Sonido de inicio del giro (tic) — reutiliza el generador
+        try { toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 120) } catch (_: Exception) { }
         // Genera partículas de colores en el espacio vacío
-        particulas = List(22) { ParticulaRuleta.aleatoria() }
+        particulas = List(12) { ParticulaRuleta.aleatoria() }
 
-        // Crece a 1.15x en el primer momento del giro
+        // Crece a 1.1x en el primer momento del giro
         escala.animateTo(
-            targetValue = 1.15f,
+            targetValue = 1.1f,
             animationSpec = tween(durationMillis = 500)
         )
 
-        val sector = 360f / ALIMENTOS_RULETA.size
+        val sector = 360f / alimentos.size
         val actual = ((rotacion.value % 360f) + 360f) % 360f
         val deseado = ((240f - indice * sector) + 360f) % 360f
         var delta = deseado - actual
@@ -118,6 +123,8 @@ fun RuedaAlimentacionScreen(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 400)
         )
+        // Sonido de detención (beep más largo) — reutiliza el generador
+        try { toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 200) } catch (_: Exception) { }
         // Las partículas se van al detenerse
         particulas = emptyList()
         girando = false
@@ -133,13 +140,13 @@ fun RuedaAlimentacionScreen(
         Spacer(Modifier.height(12.dp))
 
         Text(
-            text = "${indice + 1} de ${ALIMENTOS_RULETA.size}",
+            text = "${indice + 1} de ${alimentos.size}",
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = InkSoft
         )
         LinearProgressIndicator(
-            progress = { (indice + 1).toFloat() / ALIMENTOS_RULETA.size },
+            progress = { (indice + 1).toFloat() / alimentos.size },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp),
@@ -149,22 +156,23 @@ fun RuedaAlimentacionScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // La ruleta
+        // La ruleta (más grande y centrada)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(190.dp),
+                .height(270.dp),
             contentAlignment = Alignment.Center
         ) {
-            Ruleta(rotacion = rotacion.value, escala = escala.value)
+            Ruleta(rotacion = rotacion.value, escala = escala.value, alimentos = alimentos)
         }
 
-        // Partículas decorativas que suben desde abajo mientras gira la ruleta
+        // Partículas decorativas: abajo del todo, elevándose hacia la ruleta
         if (girando && particulas.isNotEmpty()) {
+            Spacer(Modifier.weight(1f))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
+                    .height(120.dp)
             ) {
                 particulas.forEach { p ->
                     ParticulaAnimada(particula = p)
@@ -199,28 +207,34 @@ fun RuedaAlimentacionScreen(
             Spacer(Modifier.height(16.dp))
         }
 
-        // Opciones
+        // Opciones (grilla de 2 columnas para ahorrar espacio)
         if (!girando) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                opcionesBarajadas.forEach { opcion ->
-                    OutlinedButton(
-                        onClick = {
-                            seleccionada = opcion
-                            if (opcion == alimento.aporte) puntaje += 10
-                        },
-                        enabled = !respondio && !girando,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MangoDark),
-                        border = BorderStroke(2.dp, if (opcion == alimento.aporte && respondio) Leaf else Mango),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    ) {
-                        Text(
-                            text = opcion,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MangoDark
-                        )
+                opcionesBarajadas.chunked(2).forEach { fila ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        fila.forEach { opcion ->
+                            OutlinedButton(
+                                onClick = {
+                                    seleccionada = opcion
+                                    if (opcion == alimento.aporte) puntaje += 10
+                                },
+                                enabled = !respondio && !girando,
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MangoDark),
+                                border = BorderStroke(2.dp, if (opcion == alimento.aporte && respondio) Leaf else Mango),
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(52.dp)
+                            ) {
+                                Text(
+                                    text = opcion,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MangoDark,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                        if (fila.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
             }
@@ -251,7 +265,7 @@ fun RuedaAlimentacionScreen(
 
             Button(
                 onClick = {
-                    if (indice + 1 >= ALIMENTOS_RULETA.size) {
+                    if (indice + 1 >= alimentos.size) {
                         onTerminada(puntaje)
                     } else {
                         indice++
@@ -263,7 +277,7 @@ fun RuedaAlimentacionScreen(
                 modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 Text(
-                    text = if (indice + 1 >= ALIMENTOS_RULETA.size) "Ver resultados" else "Siguiente →",
+                    text = if (indice + 1 >= alimentos.size) "Ver resultados" else "Siguiente →",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White
                 )
@@ -277,11 +291,11 @@ fun RuedaAlimentacionScreen(
  * juntos (rotate). La flecha triangular queda fija arriba apuntando al disco.
  */
 @Composable
-private fun Ruleta(rotacion: Float, escala: Float) {
+private fun Ruleta(rotacion: Float, escala: Float, alimentos: List<AlimentoRuleta>) {
     val textMeasurer = rememberTextMeasurer()
     Box(
         modifier = Modifier
-            .size(170.dp)
+            .size(230.dp)
             .graphicsLayer {
                 scaleX = escala
                 scaleY = escala
@@ -289,17 +303,17 @@ private fun Ruleta(rotacion: Float, escala: Float) {
         contentAlignment = Alignment.Center
     ) {
         Canvas(
-            modifier = Modifier.size(170.dp)
+            modifier = Modifier.size(230.dp)
         ) {
-            val sector = 360f / ALIMENTOS_RULETA.size
+            val sector = 360f / alimentos.size
             val radio = size.minDimension / 2f
             val centro = center
 
             rotate(degrees = rotacion, pivot = centro) {
                 // Sectores de color
-                ALIMENTOS_RULETA.forEachIndexed { i, _ ->
+                alimentos.forEachIndexed { i, _ ->
                     drawArc(
-                        color = COLORES_RULETA[i],
+                        color = COLORES_RULETA[i % COLORES_RULETA.size],
                         startAngle = i * sector,
                         sweepAngle = sector,
                         useCenter = true,
@@ -308,13 +322,13 @@ private fun Ruleta(rotacion: Float, escala: Float) {
                     )
                 }
                 // Emojis en el centro de cada sector (giran con la ruleta)
-                ALIMENTOS_RULETA.forEachIndexed { i, item ->
+                alimentos.forEachIndexed { i, item ->
                     val angulo = Math.toRadians((i * sector + sector / 2).toDouble())
                     val x = (centro.x + cos(angulo) * radio * 0.68).toFloat()
                     val y = (centro.y + sin(angulo) * radio * 0.68).toFloat()
                     val layout = textMeasurer.measure(
                         text = item.emoji,
-                        style = TextStyle(fontSize = 22.sp)
+                        style = TextStyle(fontSize = 28.sp)
                     )
                     drawText(
                         textLayoutResult = layout,
@@ -332,12 +346,12 @@ private fun Ruleta(rotacion: Float, escala: Float) {
             drawCircle(color = Color.White, radius = radio * 0.45f)
         }
 
-        // Flecha indicadora arriba (fija, no gira)
+        // Flecha indicadora arriba (fija, no gira) — rojo para que contraste con la ruleta
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset(y = (-6).dp)
-                .size(width = 30.dp, height = 26.dp),
+                .size(width = 34.dp, height = 30.dp),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -347,7 +361,16 @@ private fun Ruleta(rotacion: Float, escala: Float) {
                     lineTo(size.width, 0f)
                     close()
                 }
-                drawPath(path = triangle, color = Mango)
+                // Borde blanco para resaltar
+                drawPath(path = triangle, color = Color.White)
+                // Triángulo rojo ligeramente más pequeño
+                val inner = Path().apply {
+                    moveTo(size.width / 2f, size.height - 3f)
+                    lineTo(3f, 3f)
+                    lineTo(size.width - 3f, 3f)
+                    close()
+                }
+                drawPath(path = inner, color = Berry)
             }
         }
     }
@@ -378,7 +401,7 @@ private fun ParticulaAnimada(particula: ParticulaRuleta) {
         fontSize = particula.tamano.sp,
         modifier = Modifier
             .offset(x = particula.x.dp)
-            .offset { IntOffset(0, (offsetY.value * 400f - 260f).roundToInt()) }
+            .offset { IntOffset(0, (offsetY.value * 500f - 420f).roundToInt()) }
     )
 }
 
