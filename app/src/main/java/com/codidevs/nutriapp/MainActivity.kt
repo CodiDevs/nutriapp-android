@@ -19,9 +19,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.codidevs.nutriapp.data.models.CatalogoAlimentos
 import com.codidevs.nutriapp.data.models.GruposAlimenticios
+import com.codidevs.nutriapp.ui.actividades.CompletaFraseScreen
 import com.codidevs.nutriapp.ui.actividades.DescubreAlimentosScreen
 import com.codidevs.nutriapp.ui.actividades.GrupoPerteneceScreen
+import com.codidevs.nutriapp.ui.actividades.MejorOpcionScreen
+import com.codidevs.nutriapp.ui.actividades.MemoriaNutritivaScreen
 import com.codidevs.nutriapp.ui.actividades.PremioScreen
+import com.codidevs.nutriapp.ui.actividades.RuedaAlimentacionScreen
 import com.codidevs.nutriapp.ui.actividades.VerdaderoFalsoScreen
 import com.codidevs.nutriapp.ui.components.TabScaffold
 import com.codidevs.nutriapp.ui.home.HomeScreen
@@ -177,7 +181,10 @@ class MainActivity : ComponentActivity() {
                                         1 -> navController.navigate(NutriRoutes.ACTIVIDAD_DESCUBRE)
                                         2 -> navController.navigate(NutriRoutes.ACTIVIDAD_GRUPO)
                                         3 -> navController.navigate(NutriRoutes.ACTIVIDAD_VF)
-                                        // 4-7: minijuegos (siguientes pasos)
+                                        4 -> navController.navigate(NutriRoutes.ACTIVIDAD_FRASE)
+                                        5 -> navController.navigate(NutriRoutes.ACTIVIDAD_MEJOR)
+                                        6 -> navController.navigate(NutriRoutes.ACTIVIDAD_RULETA)
+                                        7 -> navController.navigate(NutriRoutes.ACTIVIDAD_MEMORIA)
                                     }
                                 }
                             )
@@ -212,6 +219,46 @@ class MainActivity : ComponentActivity() {
                                 onTerminada = { puntaje ->
                                     navController.navigate(NutriRoutes.PREMIO) {
                                         popUpTo(NutriRoutes.ACTIVIDAD_VF) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_FRASE) {
+                            CompletaFraseScreen(
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_FRASE) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_MEJOR) {
+                            MejorOpcionScreen(
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_MEJOR) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_RULETA) {
+                            RuedaAlimentacionScreen(
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_RULETA) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_MEMORIA) {
+                            MemoriaNutritivaScreen(
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_MEMORIA) { inclusive = true }
                                     }
                                 }
                             )
