@@ -1,0 +1,326 @@
+{
+  "modulos": [
+    {
+      "id": 1,
+      "nombre": "El Reino de los Alimentos",
+      "emoji": "🌱",
+      "niveles": [
+        {
+          "numero": 1,
+          "titulo": "Conozco los alimentos",
+          "descripcion": "Aprende a reconocer los grupos de alimentos",
+          "monedas": 20,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "descubre",
+              "nombre": "Descubre los alimentos",
+              "emoji": "🔍",
+              "datos": [
+                { "emoji": "🍎", "nombre": "Manzana", "texto": "Me da vitaminas para no enfermarme" },
+                { "emoji": "🥕", "nombre": "Zanahoria", "texto": "Ayuda a cuidar mis ojos" },
+                { "emoji": "🥦", "nombre": "Brócoli", "texto": "Me protege de enfermedades" },
+                { "emoji": "🍌", "nombre": "Banano", "texto": "Me da energía para jugar" },
+                { "emoji": "🥛", "nombre": "Leche", "texto": "Fortalece mis huesos y dientes" },
+                { "emoji": "🧀", "nombre": "Queso", "texto": "Ayuda a crecer fuerte" },
+                { "emoji": "🥚", "nombre": "Huevo", "texto": "Forma músculos" },
+                { "emoji": "🍗", "nombre": "Pollo", "texto": "Construye músculos y tejidos" },
+                { "emoji": "🥩", "nombre": "Carne", "texto": "Me ayuda a crecer fuerte" },
+                { "emoji": "🐟", "nombre": "Pescado", "texto": "Ayuda al cerebro y al corazón" },
+                { "emoji": "🍚", "nombre": "Arroz", "texto": "Me da energía" },
+                { "emoji": "🍞", "nombre": "Pan", "texto": "Me da energía para estudiar" },
+                { "emoji": "🥔", "nombre": "Papa", "texto": "Me da energía" },
+                { "emoji": "🌽", "nombre": "Maíz", "texto": "Me da energía" },
+                { "emoji": "🫘", "nombre": "Fríjoles", "texto": "Me ayudan a crecer y tienen fibra" },
+                { "emoji": "🥜", "nombre": "Maní", "texto": "Tiene grasas saludables y proteínas" },
+                { "emoji": "🫒", "nombre": "Aceite de oliva", "texto": "Protege mi corazón" },
+                { "emoji": "🧈", "nombre": "Mantequilla", "texto": "Me da energía, pero debo comer poca" },
+                { "emoji": "🍯", "nombre": "Miel", "texto": "Me da energía rápida" },
+                { "emoji": "🍬", "nombre": "Dulces", "texto": "Mucha azúcar; solo de vez en cuando" }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "grupos",
+              "nombre": "¿A qué grupo pertenece?",
+              "emoji": "🥦",
+              "datos": [
+                { "emoji": "🍎", "grupo": "Frutas", "alimentos": [ { "emoji": "🍎", "nombre": "Manzana" }, { "emoji": "🍌", "nombre": "Banano" }, { "emoji": "🍊", "nombre": "Naranja" }, { "emoji": "🍈", "nombre": "Papaya" }, { "emoji": "🥭", "nombre": "Mango" }, { "emoji": "🍉", "nombre": "Sandía" } ] },
+                { "emoji": "🥦", "grupo": "Verduras", "alimentos": [ { "emoji": "🥕", "nombre": "Zanahoria" }, { "emoji": "🍅", "nombre": "Tomate" }, { "emoji": "🥬", "nombre": "Lechuga" }, { "emoji": "🥒", "nombre": "Pepino" }, { "emoji": "🍃", "nombre": "Espinaca" }, { "emoji": "🥦", "nombre": "Brócoli" } ] },
+                { "emoji": "🍞", "grupo": "Cereales y harinas", "alimentos": [ { "emoji": "🍚", "nombre": "Arroz" }, { "emoji": "🍞", "nombre": "Pan" }, { "emoji": "🥔", "nombre": "Papa" }, { "emoji": "🍠", "nombre": "Yuca" }, { "emoji": "🍝", "nombre": "Pasta" }, { "emoji": "🌾", "nombre": "Avena" }, { "emoji": "🌽", "nombre": "Maíz" } ] },
+                { "emoji": "🍗", "grupo": "Proteínas", "alimentos": [ { "emoji": "🍗", "nombre": "Pollo" }, { "emoji": "🥩", "nombre": "Carne" }, { "emoji": "🐟", "nombre": "Pescado" }, { "emoji": "🥚", "nombre": "Huevo" } ] },
+                { "emoji": "🫘", "grupo": "Legumbres", "alimentos": [ { "emoji": "🫘", "nombre": "Fríjoles" }, { "emoji": "🟤", "nombre": "Lentejas" }, { "emoji": "🟡", "nombre": "Garbanzos" }, { "emoji": "🫛", "nombre": "Arvejas" } ] },
+                { "emoji": "🥛", "grupo": "Lácteos", "alimentos": [ { "emoji": "🥛", "nombre": "Leche" }, { "emoji": "🧀", "nombre": "Queso" }, { "emoji": "🫗", "nombre": "Yogur" } ] },
+                { "emoji": "🥜", "grupo": "Grasas saludables", "alimentos": [ { "emoji": "🥑", "nombre": "Aguacate" }, { "emoji": "🌰", "nombre": "Nueces" }, { "emoji": "🥜", "nombre": "Maní" }, { "emoji": "🫒", "nombre": "Aceite de oliva" } ] },
+                { "emoji": "🍬", "grupo": "Azúcares", "alimentos": [ { "emoji": "🥤", "nombre": "Gaseosas" }, { "emoji": "🍬", "nombre": "Dulces" }, { "emoji": "🍫", "nombre": "Chocolates" }, { "emoji": "🍪", "nombre": "Galletas" }, { "emoji": "🍦", "nombre": "Helados" } ] }
+              ]
+            },
+            {
+              "id": 3,
+              "tipo": "memoria",
+              "nombre": "Memoria nutritiva",
+              "emoji": "🧠",
+              "datos": [
+                { "emoji": "🍗", "texto": "Proteínas" },
+                { "emoji": "🥛", "texto": "Calcio" },
+                { "emoji": "🍎", "texto": "Vitaminas" },
+                { "emoji": "🥦", "texto": "Fibra" },
+                { "emoji": "🍞", "texto": "Energía" },
+                { "emoji": "🐟", "texto": "Omega-3" },
+                { "emoji": "🫘", "texto": "Proteínas vegetales" },
+                { "emoji": "🥜", "texto": "Grasas saludables" }
+              ]
+            }
+          ]
+        },
+        {
+          "numero": 2,
+          "titulo": "Descubro los nutrientes",
+          "descripcion": "Descubre qué nutrientes te dan las comidas",
+          "monedas": 20,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "vf",
+              "nombre": "Verdadero o falso",
+              "emoji": "✅",
+              "datos": [
+                { "emoji": "🍎", "enunciado": "Las frutas tienen muchas vitaminas.", "verdadero": true },
+                { "emoji": "🥛", "enunciado": "La leche ayuda a fortalecer los huesos.", "verdadero": true },
+                { "emoji": "🍬", "enunciado": "Comer dulces todos los días es bueno para la salud.", "verdadero": false },
+                { "emoji": "🍗", "enunciado": "El pollo ayuda a formar músculos.", "verdadero": true },
+                { "emoji": "🥦", "enunciado": "Las verduras ayudan a prevenir enfermedades.", "verdadero": true },
+                { "emoji": "🥤", "enunciado": "Las gaseosas deben reemplazar el agua.", "verdadero": false },
+                { "emoji": "🍞", "enunciado": "El arroz nos da energía.", "verdadero": true },
+                { "emoji": "🐟", "enunciado": "El pescado ayuda al cerebro.", "verdadero": true }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "completa",
+              "nombre": "Completa la frase",
+              "emoji": "✏️",
+              "datos": [
+                { "emoji": "🍎", "antes": "Las frutas tienen muchas", "despues": ".", "respuesta": "vitaminas", "opciones": ["vitaminas", "proteínas", "grasas", "minerales"] },
+                { "emoji": "🥩", "antes": "La carne tiene muchas", "despues": ".", "respuesta": "proteínas", "opciones": ["vitaminas", "proteínas", "calcio", "fibra"] },
+                { "emoji": "🥛", "antes": "La leche tiene mucho", "despues": ".", "respuesta": "calcio", "opciones": ["calcio", "hierro", "azúcar", "sodio"] },
+                { "emoji": "🍞", "antes": "El pan nos da", "despues": ".", "respuesta": "energía", "opciones": ["calcio", "fibra", "energía", "vitaminas"] },
+                { "emoji": "🥦", "antes": "Las verduras tienen mucha", "despues": ".", "respuesta": "fibra", "opciones": ["grasa", "fibra", "azúcar", "proteína"] }
+              ]
+            }
+          ]
+        },
+        {
+          "numero": 3,
+          "titulo": "Armo mi plato saludable",
+          "descripcion": "Combina alimentos para un plato sano",
+          "monedas": 25,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "mejor_opcion",
+              "nombre": "La mejor opción",
+              "emoji": "🍽️",
+              "datos": [
+                { "pregunta": "¿Qué elegirías para un desayuno saludable?", "correcta": { "emoji": "🥛🍎🍞", "texto": "Leche, fruta y pan" }, "incorrecta": { "emoji": "🥤🍬🍩", "texto": "Gaseosa y dulces" } },
+                { "pregunta": "¿Qué merienda es mejor?", "correcta": { "emoji": "🍌🥛", "texto": "Banano y yogur" }, "incorrecta": { "emoji": "🍫🥤", "texto": "Chocolate y gaseosa" } }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "ruleta",
+              "nombre": "Rueda de la alimentación",
+              "emoji": "🎡",
+              "datos": [
+                { "emoji": "🥚", "nombre": "Huevo", "aporte": "Proteínas", "opciones": ["Proteínas", "Mucha azúcar", "Solo agua", "Nada"] },
+                { "emoji": "🍌", "nombre": "Banano", "aporte": "Vitaminas", "opciones": ["Vitaminas", "Mucha azúcar", "Solo agua", "Nada"] },
+                { "emoji": "🧀", "nombre": "Queso", "aporte": "Calcio", "opciones": ["Calcio", "Grasas", "Solo agua", "Nada"] },
+                { "emoji": "🍝", "nombre": "Pasta", "aporte": "Carbohidratos", "opciones": ["Carbohidratos", "Proteínas", "Solo agua", "Nada"] },
+                { "emoji": "🥑", "nombre": "Aguacate", "aporte": "Grasas saludables", "opciones": ["Grasas saludables", "Mucha azúcar", "Solo agua", "Nada"] },
+                { "emoji": "🍫", "nombre": "Chocolate", "aporte": "Azúcares", "opciones": ["Azúcares", "Mucha fibra", "Solo agua", "Nada"] }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "nombre": "Muévete y Cuídate",
+      "emoji": "🏃",
+      "niveles": [
+        {
+          "numero": 4,
+          "titulo": "Campeón de actividad física",
+          "descripcion": "¡Muévete y fortalece tu cuerpo!",
+          "monedas": 30,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "quiz",
+              "nombre": "¿Cuál es la respuesta correcta?",
+              "emoji": "🏃",
+              "datos": [
+                { "pregunta": "¿Cuánto tiempo debemos hacer actividad física todos los días?", "correcta": "60 minutos", "incorrectas": ["10 minutos", "30 minutos", "No es necesario"] },
+                { "pregunta": "¿Cuál de estas actividades ayuda a fortalecer tu cuerpo?", "correcta": "Montar bicicleta", "incorrectas": ["Ver televisión", "Jugar videojuegos todo el día", "Comer dulces"] },
+                { "pregunta": "¿Qué actividad es buena para tu corazón?", "correcta": "Todas las anteriores", "incorrectas": ["Correr", "Jugar fútbol", "Montar bicicleta"] },
+                { "pregunta": "Después de hacer ejercicio debemos:", "correcta": "Tomar agua", "incorrectas": ["Tomar gaseosa", "Comer dulces", "Solo jugo"] },
+                { "pregunta": "¿Qué debemos hacer antes de jugar o hacer deporte?", "correcta": "Calentar el cuerpo", "incorrectas": ["Dormir", "Comer comida rápida", "Jugar con el celular"] }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "mejor_opcion",
+              "nombre": "Elige el plato saludable",
+              "emoji": "🍽️",
+              "datos": [
+                { "pregunta": "¿Cuál almuerzo escogerías?", "correcta": { "emoji": "🥗🍗🍚💧", "texto": "Ensalada, pollo, arroz y agua" }, "incorrecta": { "emoji": "🍔🍟🥤", "texto": "Hamburguesa, papas y gaseosa" } }
+              ]
+            }
+          ]
+        },
+        {
+          "numero": 5,
+          "titulo": "Cuido mi cuerpo y mi mente",
+          "descripcion": "Hidratación, descanso y bienestar",
+          "monedas": 20,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "vf",
+              "nombre": "Verdadero o falso",
+              "emoji": "✅",
+              "datos": [
+                { "emoji": "🏃", "enunciado": "El ejercicio ayuda a crecer fuerte.", "verdadero": true },
+                { "emoji": "📺", "enunciado": "Ver televisión todo el día es saludable.", "verdadero": false },
+                { "emoji": "😴", "enunciado": "Dormir bien ayuda a aprender mejor.", "verdadero": true },
+                { "emoji": "💧", "enunciado": "Tomar agua es mejor que tomar gaseosas.", "verdadero": true },
+                { "emoji": "🍎", "enunciado": "Comer frutas todos los días ayuda a proteger nuestro cuerpo.", "verdadero": true },
+                { "emoji": "🧼", "enunciado": "Es importante lavarse las manos antes de comer.", "verdadero": true },
+                { "emoji": "⚽", "enunciado": "Jugar al aire libre también es hacer actividad física.", "verdadero": true },
+                { "emoji": "🦷", "enunciado": "Es bueno cepillarse los dientes después de comer.", "verdadero": true }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "situaciones",
+              "nombre": "¿Qué harías tú?",
+              "emoji": "🤔",
+              "datos": [
+                { "pregunta": "Vas al recreo. ¿Qué eliges?", "correcta": { "emoji": "🍎", "texto": "Manzana" }, "incorrecta": { "emoji": "🍬", "texto": "Dulces" } },
+                { "pregunta": "Llegas del colegio. ¿Qué haces primero?", "correcta": { "emoji": "🚲", "texto": "Salir a montar bicicleta" }, "incorrecta": { "emoji": "📱", "texto": "Jugar videojuegos 4 horas" } },
+                { "pregunta": "Tienes sed. ¿Qué tomas?", "correcta": { "emoji": "💧", "texto": "Agua" }, "incorrecta": { "emoji": "🥤", "texto": "Gaseosa" } },
+                { "pregunta": "Es hora de dormir. ¿Qué haces?", "correcta": { "emoji": "😴", "texto": "Dormir temprano" }, "incorrecta": { "emoji": "📱", "texto": "Usar el celular hasta la madrugada" } }
+              ]
+            }
+          ]
+        },
+        {
+          "numero": 6,
+          "titulo": "Elijo hábitos saludables",
+          "descripcion": "Higiene y hábitos para todos los días",
+          "monedas": 25,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "mejor_opcion",
+              "nombre": "¿Cuál hábito es saludable?",
+              "emoji": "🍎",
+              "datos": [
+                { "pregunta": "¿Qué eliges como refrigerio?", "correcta": { "emoji": "🍎", "texto": "Comer una manzana" }, "incorrecta": { "emoji": "🍬", "texto": "Comer muchos dulces" } },
+                { "pregunta": "¿Qué prefieres tomar?", "correcta": { "emoji": "💧", "texto": "Agua" }, "incorrecta": { "emoji": "🥤", "texto": "Gaseosa" } },
+                { "pregunta": "¿Cómo pasas tu tarde?", "correcta": { "emoji": "⚽", "texto": "Jugar fútbol" }, "incorrecta": { "emoji": "📱", "texto": "Estar sentado todo el día" } },
+                { "pregunta": "¿A qué hora duermes?", "correcta": { "emoji": "😴", "texto": "Dormir temprano" }, "incorrecta": { "emoji": "🌙", "texto": "Dormirse a medianoche jugando videojuegos" } }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "semaforo",
+              "nombre": "El Semáforo Saludable",
+              "emoji": "🚦",
+              "datos": {
+                "verde": [
+                  { "emoji": "🍎", "nombre": "Frutas" },
+                  { "emoji": "🥦", "nombre": "Verduras" },
+                  { "emoji": "🥛", "nombre": "Leche" },
+                  { "emoji": "💧", "nombre": "Agua" },
+                  { "emoji": "🐟", "nombre": "Pescado" },
+                  { "emoji": "🍗", "nombre": "Pollo" },
+                  { "emoji": "🫘", "nombre": "Fríjoles" }
+                ],
+                "amarillo": [
+                  { "emoji": "🧀", "nombre": "Queso" },
+                  { "emoji": "🧈", "nombre": "Mantequilla" },
+                  { "emoji": "🍞", "nombre": "Pan" },
+                  { "emoji": "🥔", "nombre": "Papa" }
+                ],
+                "rojo": [
+                  { "emoji": "🍬", "nombre": "Dulces" },
+                  { "emoji": "🍩", "nombre": "Donas" },
+                  { "emoji": "🍫", "nombre": "Chocolates" },
+                  { "emoji": "🥤", "nombre": "Gaseosas" },
+                  { "emoji": "🍟", "nombre": "Papas fritas" },
+                  { "emoji": "🍕", "nombre": "Pizza" }
+                ]
+              }
+            },
+            {
+              "id": 3,
+              "tipo": "reto",
+              "nombre": "Mi reto saludable",
+              "emoji": "⭐",
+              "datos": [
+                { "emoji": "🍎", "accion": "Comí una fruta", "puntos": 10 },
+                { "emoji": "🥦", "accion": "Comí verduras", "puntos": 10 },
+                { "emoji": "💧", "accion": "Tomé suficiente agua", "puntos": 10 },
+                { "emoji": "⚽", "accion": "Jugué al aire libre", "puntos": 10 },
+                { "emoji": "🚶", "accion": "Caminé", "puntos": 10 },
+                { "emoji": "🏃", "accion": "Corrí", "puntos": 20 },
+                { "emoji": "😴", "accion": "Dormí temprano", "puntos": 10 },
+                { "emoji": "🦷", "accion": "Me cepillé los dientes", "puntos": 5 },
+                { "emoji": "🧼", "accion": "Lavé mis manos antes de comer", "puntos": 5 },
+                { "emoji": "🍽️", "accion": "Ayudé a preparar una comida saludable", "puntos": 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "numero": 7,
+          "titulo": "Superhéroe de la salud",
+          "descripcion": "¡Conviértete en el héroe de tu salud!",
+          "monedas": 50,
+          "actividades": [
+            {
+              "id": 1,
+              "tipo": "une",
+              "nombre": "Une la imagen con el beneficio",
+              "emoji": "🤝",
+              "datos": [
+                { "emoji": "🚴", "nombre": "Bicicleta", "texto": "Fortalece el corazón" },
+                { "emoji": "🏃", "nombre": "Correr", "texto": "Mejora la resistencia" },
+                { "emoji": "🤸", "nombre": "Saltar la cuerda", "texto": "Fortalece músculos y huesos" },
+                { "emoji": "🏊", "nombre": "Nadar", "texto": "Ejercita todo el cuerpo" },
+                { "emoji": "⚽", "nombre": "Fútbol", "texto": "Ayuda a trabajar en equipo" },
+                { "emoji": "💧", "nombre": "Agua", "texto": "Evita la deshidratación" },
+                { "emoji": "😴", "nombre": "Dormir", "texto": "Ayuda al crecimiento" },
+                { "emoji": "🧼", "nombre": "Lavarse las manos", "texto": "Previene enfermedades" }
+              ]
+            },
+            {
+              "id": 2,
+              "tipo": "completa",
+              "nombre": "Completa la frase",
+              "emoji": "✏️",
+              "datos": [
+                { "emoji": "💧", "antes": "Debo tomar suficiente", "despues": "durante el día.", "respuesta": "agua", "opciones": ["agua", "jugo", "leche", "gaseosa"] },
+                { "emoji": "😴", "antes": "Debo dormir aproximadamente", "despues": "horas cada noche.", "respuesta": "9 a 11", "opciones": ["5 a 6", "7 a 8", "9 a 11", "12 a 14"] },
+                { "emoji": "🏃", "antes": "Debo hacer actividad física durante", "despues": "minutos al día.", "respuesta": "60", "opciones": ["10", "30", "60", "90"] },
+                { "emoji": "🥦", "antes": "Las verduras ayudan a cuidar mi", "despues": ".", "respuesta": "salud", "opciones": ["peso", "salud", "color", "sabor"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
