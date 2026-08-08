@@ -12,6 +12,7 @@ object NutriRoutes {
     const val ACTIVIDADES = "actividades"
     const val ACTIVIDAD_DESCUBRE = "actividad_descubre"
     const val ACTIVIDAD_GRUPO = "actividad_grupo"
+    const val ACTIVIDAD_VF = "actividad_vf"
     const val PREMIO = "premio"
     const val RECOMPENSAS = "recompensas"
     const val PERFIL = "perfil"

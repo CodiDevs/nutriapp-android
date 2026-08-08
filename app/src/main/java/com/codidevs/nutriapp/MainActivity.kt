@@ -22,6 +22,7 @@ import com.codidevs.nutriapp.data.models.GruposAlimenticios
 import com.codidevs.nutriapp.ui.actividades.DescubreAlimentosScreen
 import com.codidevs.nutriapp.ui.actividades.GrupoPerteneceScreen
 import com.codidevs.nutriapp.ui.actividades.PremioScreen
+import com.codidevs.nutriapp.ui.actividades.VerdaderoFalsoScreen
 import com.codidevs.nutriapp.ui.components.TabScaffold
 import com.codidevs.nutriapp.ui.home.HomeScreen
 import com.codidevs.nutriapp.ui.juegos.JuegosScreen
@@ -175,7 +176,8 @@ class MainActivity : ComponentActivity() {
                                     when (actividad.id) {
                                         1 -> navController.navigate(NutriRoutes.ACTIVIDAD_DESCUBRE)
                                         2 -> navController.navigate(NutriRoutes.ACTIVIDAD_GRUPO)
-                                        // 3-7: minijuegos (siguientes pasos)
+                                        3 -> navController.navigate(NutriRoutes.ACTIVIDAD_VF)
+                                        // 4-7: minijuegos (siguientes pasos)
                                     }
                                 }
                             )
@@ -200,6 +202,16 @@ class MainActivity : ComponentActivity() {
                                 onTerminada = { puntaje ->
                                     navController.navigate(NutriRoutes.PREMIO) {
                                         popUpTo(NutriRoutes.ACTIVIDAD_GRUPO) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(NutriRoutes.ACTIVIDAD_VF) {
+                            VerdaderoFalsoScreen(
+                                onBack = { navController.popBackStack() },
+                                onTerminada = { puntaje ->
+                                    navController.navigate(NutriRoutes.PREMIO) {
+                                        popUpTo(NutriRoutes.ACTIVIDAD_VF) { inclusive = true }
                                     }
                                 }
                             )
