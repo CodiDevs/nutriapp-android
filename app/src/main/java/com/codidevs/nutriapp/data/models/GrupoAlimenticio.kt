@@ -37,7 +37,7 @@ object GruposAlimenticios {
                 AlimentoConEmoji("🍅", "Tomate"),
                 AlimentoConEmoji("🥬", "Lechuga"),
                 AlimentoConEmoji("🥒", "Pepino"),
-                AlimentoConEmoji("🍃", "Espinaca"),
+                AlimentoConEmoji("🥗", "Espinaca"),
                 AlimentoConEmoji("🥦", "Brócoli")
             )
         ),
@@ -66,8 +66,8 @@ object GruposAlimenticios {
             "🫘", "Legumbres",
             listOf(
                 AlimentoConEmoji("🫘", "Fríjoles"),
-                AlimentoConEmoji("🟤", "Lentejas"),
-                AlimentoConEmoji("🟡", "Garbanzos"),
+                AlimentoConEmoji("🍲", "Lentejas"),
+                AlimentoConEmoji("🌰", "Garbanzos"),
                 AlimentoConEmoji("🫛", "Arvejas")
             )
         ),

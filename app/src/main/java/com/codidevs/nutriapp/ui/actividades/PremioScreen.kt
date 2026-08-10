@@ -12,23 +12,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.ui.theme.Berry
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Leaf
+import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoDark
 
 /**
- * Pantalla de premio que aparece al completar una actividad:
- * "¡Excelente! Ganaste por completar la actividad" + recompensas (⭐🪙🏅).
+ * Pantalla de premio que aparece al terminar una actividad o minijuego.
+ * El mensaje, color y recompensas dependen del porcentaje de acierto:
+ * - >=70% (2-3 estrellas): "¡Excelente!" verde, recompensas completas.
+ * - >=40% (1 estrella): "¡Bien hecho!" naranja, recompensas a la mitad.
+ * - <40% (0 estrellas): "¡Sigue intentando!" rojo, sin recompensas.
  */
 @Composable
 fun PremioScreen(
-    estrellas: Int = 3,
-    monedas: Int = 20,
-    medallas: Int = 1,
+    porcentaje: Int = 100,
+    estrellas: Int = 0,
+    monedas: Int = 0,
+    medallas: Int = 0,
     onContinuar: () -> Unit
 ) {
+    // Evita que el niño presione Continuar muchas veces y rompa la navegación
+    var yaPresionado by remember { mutableStateOf(false) }
+
+    // Estado según las estrellas asignadas (1-3 según nivel, 0 si no completó)
+    val (emoji, titulo, color) = when {
+        estrellas >= 3 -> Triple("🎉", "¡Excelente!", Leaf)
+        estrellas >= 2 -> Triple("🎉", "¡Excelente!", Leaf)
+        estrellas == 1 -> Triple("👍", "¡Bien hecho!", Mango)
+        else -> Triple("💪", "¡Sigue intentando!", Berry)
+    }
+    val mensaje = when {
+        estrellas >= 2 -> "¡Completaste la actividad!"
+        estrellas == 1 -> "Vas muy bien, sigue practicando"
+        else -> "No te rindas, ¡tú puedes!"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -36,21 +58,21 @@ fun PremioScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "🎉", fontSize = 64.sp)
+        Text(text = emoji, fontSize = 64.sp)
 
         Spacer(Modifier.height(12.dp))
 
         Text(
-            text = "¡Excelente!",
+            text = titulo,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = Leaf
+            color = color
         )
 
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Ganaste por completar la actividad",
+            text = mensaje,
             style = MaterialTheme.typography.bodyLarge,
             color = InkSoft,
             textAlign = TextAlign.Center
@@ -58,21 +80,27 @@ fun PremioScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // Recompensas
+        // Recompensas (solo si ganó algo)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            PremioItem("⭐", "+$estrellas")
-            PremioItem("🪙", "+$monedas")
-            PremioItem("🏅", "+$medallas")
+            if (estrellas > 0) PremioItem("⭐", "+$estrellas")
+            if (monedas > 0) PremioItem("🪙", "+$monedas")
+            if (medallas > 0) PremioItem("🏅", "+$medallas")
         }
 
         Spacer(Modifier.height(36.dp))
 
         Button(
-            onClick = onContinuar,
-            colors = ButtonDefaults.buttonColors(containerColor = Mango),
+            onClick = {
+                if (!yaPresionado) {
+                    yaPresionado = true
+                    onContinuar()
+                }
+            },
+            enabled = !yaPresionado,
+            colors = ButtonDefaults.buttonColors(containerColor = color),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().height(52.dp)
         ) {

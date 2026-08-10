@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -107,11 +108,18 @@ fun ModulosScreen(
                 }
             }
 
-            // Módulo de Actividad física (disponible)
+            // Módulo de Actividad física (bloqueado hasta completar Nutrición)
+            val actividadBloqueada = !nutricionCompletado
             Card(
-                onClick = onActividadFisica,
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(2.dp, Sky),
+                onClick = { if (!actividadBloqueada) onActividadFisica() },
+                enabled = !actividadBloqueada,
+                colors = CardDefaults.cardColors(
+                    containerColor = if (actividadBloqueada) Locked.copy(alpha = 0.2f) else Color.White
+                ),
+                border = BorderStroke(
+                    2.dp,
+                    if (actividadBloqueada) Locked else Sky
+                ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth().height(96.dp)
             ) {
@@ -126,7 +134,11 @@ fun ModulosScreen(
                         modifier = Modifier.size(48.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "🏃", fontSize = 40.sp)
+                        Text(
+                            text = "🏃",
+                            fontSize = 40.sp,
+                            modifier = Modifier.alpha(if (actividadBloqueada) 0.5f else 1f)
+                        )
                     }
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -134,16 +146,17 @@ fun ModulosScreen(
                             text = "Actividad física",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = LeafDark
+                            color = if (actividadBloqueada) InkSoft else LeafDark
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = if (actividadCompletado)
-                                "Completado ✓"
-                            else
-                                "Niveles 4 a 7 · ¡Muévete!",
+                            text = when {
+                                actividadCompletado -> "Completado ✓"
+                                actividadBloqueada -> "Completa el módulo de Nutrición"
+                                else -> "Niveles 4 a 7 · ¡Muévete!"
+                            },
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (actividadCompletado) LeafDark else InkSoft,
+                            color = if (actividadBloqueada) InkSoft else LeafDark,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -151,7 +164,11 @@ fun ModulosScreen(
                         modifier = Modifier.size(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "▶", fontSize = 20.sp, color = LeafDark)
+                        Text(
+                            text = if (actividadBloqueada) "🔒" else "▶",
+                            fontSize = if (actividadBloqueada) 18.sp else 20.sp,
+                            color = if (actividadBloqueada) InkSoft else LeafDark
+                        )
                     }
                 }
             }

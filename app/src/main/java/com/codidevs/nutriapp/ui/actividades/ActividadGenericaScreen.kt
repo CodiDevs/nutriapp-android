@@ -13,16 +13,32 @@ fun ActividadGenericaScreen(
     tipo: String,
     datos: Any?,
     titulo: String,
+    totalPreguntas: Int,
     onBack: () -> Unit,
-    onTerminada: (puntaje: Int) -> Unit
+    onTerminada: (puntaje: Int, porcentaje: Int) -> Unit
 ) {
+    // Calcula el porcentaje de acierto según el puntaje y el total de preguntas.
+    // Los tipos de aprendizaje o sin examen ("descubre", "ruleta", "une", "semaforo",
+    // "reto") no tienen fallos reales: al completarlos se da el 100% (3 estrellas).
+    val sinFallos = tipo == "descubre" || tipo == "ruleta" || tipo == "une" ||
+        tipo == "semaforo" || tipo == "reto"
+    val terminar = { puntaje: Int ->
+        val porcentaje = if (sinFallos) {
+            100
+        } else {
+            val maximo = totalPreguntas * 10
+            if (maximo > 0) (puntaje * 100 / maximo).coerceIn(0, 100) else 0
+        }
+        onTerminada(puntaje, porcentaje)
+    }
+
     when (tipo) {
         "descubre" -> {
             val lista = datos as? List<ItemDescubre>
             DescubreAlimentosScreen(
                 alimentos = lista?.map { it.toAlimento() } ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "grupos" -> {
@@ -30,7 +46,7 @@ fun ActividadGenericaScreen(
             GrupoPerteneceScreen(
                 grupos = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "memoria" -> {
@@ -38,7 +54,7 @@ fun ActividadGenericaScreen(
             MemoriaNutritivaScreen(
                 pares = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "vf" -> {
@@ -46,7 +62,7 @@ fun ActividadGenericaScreen(
             VerdaderoFalsoScreen(
                 preguntas = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "completa" -> {
@@ -54,7 +70,7 @@ fun ActividadGenericaScreen(
             CompletaFraseScreen(
                 frases = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "mejor_opcion", "situaciones" -> {
@@ -62,7 +78,7 @@ fun ActividadGenericaScreen(
             MejorOpcionNivel2Screen(
                 preguntas = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "ruleta" -> {
@@ -70,7 +86,7 @@ fun ActividadGenericaScreen(
             RuedaAlimentacionScreen(
                 alimentos = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "quiz" -> {
@@ -78,7 +94,7 @@ fun ActividadGenericaScreen(
             QuizScreen(
                 preguntas = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "semaforo" -> {
@@ -86,7 +102,7 @@ fun ActividadGenericaScreen(
             SemaforoScreen(
                 datos = dato ?: SemaforoDatos(emptyList(), emptyList(), emptyList()),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "reto" -> {
@@ -94,7 +110,7 @@ fun ActividadGenericaScreen(
             RetoScreen(
                 acciones = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         "une" -> {
@@ -102,7 +118,7 @@ fun ActividadGenericaScreen(
             UneImagenScreen(
                 pares = lista ?: emptyList(),
                 onBack = onBack,
-                onTerminada = onTerminada
+                onTerminada = terminar
             )
         }
         else -> {
@@ -119,9 +135,3 @@ data class ItemDescubre(
 ) {
     fun toAlimento() = com.codidevs.nutriapp.data.models.Alimento(emoji, nombre, texto)
 }
-
-/** Item de "grupos" del JSON (por ahora no usado en pantalla). */
-data class ItemGrupos(
-    val emoji: String,
-    val grupo: String
-)

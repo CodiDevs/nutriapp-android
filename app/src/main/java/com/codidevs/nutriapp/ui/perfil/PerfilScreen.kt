@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.ui.theme.Berry
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.LeafDark
@@ -37,7 +38,8 @@ fun PerfilScreen(
     medallas: List<MedallaInfo>,
     medallaPerfil: String, // id de la medalla puesta en el perfil ("" = ninguna)
     onPonerMedalla: (String) -> Unit,
-    onVerRecompensas: () -> Unit
+    onVerRecompensas: () -> Unit,
+    onCrearRegistro: () -> Unit
 ) {
     // La medalla que se muestra en la cabecera: la elegida, o la más reciente desbloqueada
     val medallaMostrada = medallas.firstOrNull { it.id == medallaPerfil }
@@ -45,6 +47,8 @@ fun PerfilScreen(
     val desbloqueadas = medallas.filter { it.desbloqueada }
     // Mostrar opción de "poner en perfil" para la medalla tocada
     var medallaSeleccionada by remember { mutableStateOf<String?>(null) }
+    // Diálogo de confirmación para crear otro registro
+    var mostrarDialogoRegistro by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -204,7 +208,51 @@ fun PerfilScreen(
             )
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        // Crear otro registro
+        OutlinedButton(
+            onClick = { mostrarDialogoRegistro = true },
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Berry),
+            border = BorderStroke(2.dp, Berry),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
+            Text(
+                text = "Crear otro registro",
+                style = MaterialTheme.typography.labelLarge,
+                color = Berry
+            )
+        }
+
         Spacer(Modifier.height(20.dp))
+    }
+
+    // Aviso de confirmación antes de crear otro registro
+    if (mostrarDialogoRegistro) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoRegistro = false },
+            title = { Text("¿Crear otro registro?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Ten en cuenta que el registro actual con todo su progreso " +
+                        "(niveles, monedas y medallas) se eliminará."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarDialogoRegistro = false
+                    onCrearRegistro()
+                }) {
+                    Text("Sí, crear", color = Berry, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoRegistro = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

@@ -1,4 +1,4 @@
-package com.codidevs.nutriapp
+﻿package com.codidevs.nutriapp
 
 import android.net.Uri
 import android.os.Bundle
@@ -17,42 +17,29 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.codidevs.nutriapp.data.models.CatalogoAlimentos
 import com.codidevs.nutriapp.data.models.CatalogoMedallas
-import com.codidevs.nutriapp.data.models.CatalogoNutrientes
-import com.codidevs.nutriapp.data.models.DatosNivel2
 import com.codidevs.nutriapp.data.models.GruposAlimenticios
 import com.codidevs.nutriapp.data.repository.ActividadMapper
 import com.codidevs.nutriapp.data.repository.PreguntasRepository
+import com.codidevs.nutriapp.data.repository.ProgresoRepository
 import com.codidevs.nutriapp.ui.actividades.ActividadGenericaScreen
 import com.codidevs.nutriapp.ui.actividades.CompletaFraseScreen
-import com.codidevs.nutriapp.ui.actividades.FRASES_NIVEL1
-import com.codidevs.nutriapp.ui.actividades.PREGUNTAS_VF_NIVEL1
-import com.codidevs.nutriapp.ui.actividades.DescubreAlimentosScreen
-import com.codidevs.nutriapp.ui.actividades.DescubreNutrientesScreen
 import com.codidevs.nutriapp.ui.actividades.GrupoPerteneceScreen
 import com.codidevs.nutriapp.ui.actividades.MejorOpcionNivel2Screen
-import com.codidevs.nutriapp.ui.actividades.MejorOpcionScreen
 import com.codidevs.nutriapp.ui.actividades.MemoriaNutritivaScreen
 import com.codidevs.nutriapp.ui.actividades.PremioScreen
-import com.codidevs.nutriapp.ui.actividades.QuizScreen
-import com.codidevs.nutriapp.ui.actividades.RetoScreen
 import com.codidevs.nutriapp.ui.actividades.RuedaAlimentacionScreen
-import com.codidevs.nutriapp.ui.actividades.SemaforoDatos
-import com.codidevs.nutriapp.ui.actividades.SemaforoScreen
 import com.codidevs.nutriapp.ui.actividades.VerdaderoFalsoScreen
 import com.codidevs.nutriapp.ui.components.TabScaffold
 import com.codidevs.nutriapp.ui.home.HomeScreen
 import com.codidevs.nutriapp.ui.juegos.JuegosScreen
 import com.codidevs.nutriapp.ui.navigation.NutriRoutes
-import com.codidevs.nutriapp.data.repository.ProgresoRepository
 import com.codidevs.nutriapp.ui.onboarding.ImcScreen
 import com.codidevs.nutriapp.ui.onboarding.ModulosScreen
 import com.codidevs.nutriapp.ui.onboarding.RegistroScreen
 import com.codidevs.nutriapp.ui.onboarding.SplashScreen
 import com.codidevs.nutriapp.ui.perfil.PerfilScreen
 import com.codidevs.nutriapp.ui.recompensas.RecompensasScreen
-import com.codidevs.nutriapp.ui.sendero.ACTIVIDADES_NIVEL_1
 import com.codidevs.nutriapp.ui.sendero.ActividadInfo
 import com.codidevs.nutriapp.ui.sendero.ActividadesScreen
 import com.codidevs.nutriapp.ui.sendero.NIVELES_INFO
@@ -75,22 +62,35 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val progreso = remember { ProgresoRepository(applicationContext) }
                     val preguntas = remember { PreguntasRepository(applicationContext) }
-                    var nombreUsuario by remember { mutableStateOf("") }
+                    // Registra el día activo para la racha (solo una vez por apertura)
+                    remember { progreso.registrarDiaActivo() }
+                    // Si ya hay un usuario registrado, arranca directo en el Home
+                    val inicio = if (progreso.usuarioRegistrado) NutriRoutes.HOME else NutriRoutes.SPLASH
+                    var nombreUsuario by remember { mutableStateOf(progreso.usuarioNombre) }
                     var tabActiva by remember { mutableStateOf("home") }
                     var moduloActual by remember { mutableStateOf(1) } // 1 = Nutrición, 2 = Actividad física
                     // Refresca la UI cuando cambia el progreso
                     var versionProgreso by remember { mutableStateOf(0) }
+                    // Mapas de niveles para calcular los totales (actividades y monedas por nivel)
+                    val actividadesPorNivel = remember {
+                        (1..7).associateWith { preguntas.totalActividadesNivel(it) }
+                    }
+                    val monedasPorNivel = remember {
+                        (1..7).associateWith { preguntas.nivel(it)?.monedas ?: 20 }
+                    }
 
                     NavHost(
                         navController = navController,
-                        startDestination = NutriRoutes.SPLASH,
+                        startDestination = inicio,
                         modifier = Modifier
                             .fillMaxSize()
                             .safeDrawingPadding()
                     ) {
                         composable(NutriRoutes.SPLASH) {
                             SplashScreen(onComenzar = {
-                                navController.navigate(NutriRoutes.REGISTRO)
+                                navController.navigate(
+                                    if (progreso.usuarioRegistrado) NutriRoutes.HOME else NutriRoutes.REGISTRO
+                                )
                             })
                         }
                         composable(NutriRoutes.REGISTRO) {
@@ -119,6 +119,9 @@ class MainActivity : ComponentActivity() {
                                 estatura = estatura,
                                 onBack = { navController.popBackStack() },
                                 onAventura = {
+                                    // Guarda el usuario registrado (persistente)
+                                    progreso.guardarUsuario(nombre, edad, peso, estatura)
+                                    nombreUsuario = nombre
                                     navController.navigate(
                                         "${NutriRoutes.MODULOS}/${Uri.encode(nombre)}"
                                     )
@@ -160,11 +163,18 @@ class MainActivity : ComponentActivity() {
                         // pantalla: tocar la barra solo cambia el contenido, sin navegación,
                         // así no se acumulan copias ni se repite la animación de transición.
                         composable(NutriRoutes.HOME) {
+                            val totalMonedas = remember(versionProgreso) {
+                                progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                            }
+                            val totalEstrellas = remember(versionProgreso) {
+                                progreso.estrellasTotales(actividadesPorNivel)
+                            }
                             TabScaffold(
                                 tabActiva = tabActiva,
                                 onTab = { tabActiva = it },
-                                monedas = "🪙 ${progreso.monedasTotal}",
-                                racha = "🔥 5"
+                                monedas = "🪙 $totalMonedas",
+                                racha = "🔥 ${progreso.rachaDias}",
+                                estrellas = "⭐ $totalEstrellas"
                             ) {
                                 when (tabActiva) {
                                     "sendero" -> SenderoScreen(
@@ -176,6 +186,15 @@ class MainActivity : ComponentActivity() {
                                             (if (progreso.nivelCompleto(4, preguntas.totalActividadesNivel(4))) 1 else 0) +
                                             (if (progreso.nivelCompleto(5, preguntas.totalActividadesNivel(5))) 1 else 0) +
                                             (if (progreso.nivelCompleto(6, preguntas.totalActividadesNivel(6))) 1 else 0),
+                                        estrellasNivel = remember(versionProgreso) {
+                                            (1..7).associateWith { nivel ->
+                                                // Total de estrellas asignadas del nivel (suma 3 si está completo)
+                                                val acts = preguntas.actividadesDelNivel(nivel)
+                                                acts.sumOf {
+                                                    progreso.estrellasAsignadasActividad(nivel, it.id, acts.size)
+                                                }.coerceIn(0, 3)
+                                            }
+                                        },
                                         onNivelClick = { numero ->
                                             navController.navigate(
                                                 "${NutriRoutes.NIVEL_DETALLE}/$numero"
@@ -195,10 +214,9 @@ class MainActivity : ComponentActivity() {
                                         }
                                     )
                                     "juegos" -> JuegosScreen(
-                                        completados = remember(versionProgreso) {
+                                        estrellas = remember(versionProgreso) {
                                             listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria")
-                                                .filter { progreso.minijuegoCompletado(it) }
-                                                .toSet()
+                                                .associateWith { progreso.estrellasMinijuego(it) }
                                         },
                                         onMinijuegoClick = { id ->
                                             val ruta = when (id) {
@@ -242,6 +260,15 @@ class MainActivity : ComponentActivity() {
                                             },
                                             onVerRecompensas = {
                                                 navController.navigate(NutriRoutes.RECOMPENSAS)
+                                            },
+                                            onCrearRegistro = {
+                                                // Borra usuario y progreso, y reinicia el registro
+                                                progreso.borrarTodo()
+                                                nombreUsuario = ""
+                                                versionProgreso++
+                                                navController.navigate(NutriRoutes.REGISTRO) {
+                                                    popUpTo(NutriRoutes.HOME) { inclusive = true }
+                                                }
                                             }
                                         )
                                     }
@@ -271,7 +298,8 @@ class MainActivity : ComponentActivity() {
                                     titulo = n.titulo,
                                     descripcion = n.descripcion,
                                     actividades = n.actividades.size,
-                                    monedas = "+${n.monedas}"
+                                    // Total de monedas del nivel: monedas por actividad × número de actividades
+                                    monedas = "+${n.monedas * n.actividades.size}"
                                 )
                             } ?: nivel
                             NivelDetalleScreen(
@@ -298,17 +326,18 @@ class MainActivity : ComponentActivity() {
                                     ActividadInfo(act.id, act.emoji, act.nombre)
                                 }
                             }
-                            // Set de actividades completadas del nivel
-                            val completadas = remember(nivelId, versionProgreso) {
-                                actividadesNivel
-                                    .filter { progreso.actividadCompletada(nivelId, it.id) }
-                                    .map { it.id }
-                                    .toSet()
+                            // Estrellas asignadas de cada actividad (1-3 según nivel, 0 si no completada)
+                            val estrellasActividades = remember(nivelId, versionProgreso) {
+                                actividadesNivel.associate { act ->
+                                    act.id to progreso.estrellasAsignadasActividad(
+                                        nivelId, act.id, actividadesNivel.size
+                                    )
+                                }
                             }
                             ActividadesScreen(
                                 nivelNumero = nivelId,
                                 actividades = actividadesNivel,
-                                completadas = completadas,
+                                estrellas = estrellasActividades,
                                 onBack = { navController.popBackStack() },
                                 onActividadClick = { actividad ->
                                     // Navega a la ruta genérica con nivel y actividad
@@ -381,281 +410,103 @@ class MainActivity : ComponentActivity() {
                                 tipo = actJson?.tipo ?: "",
                                 datos = datos,
                                 titulo = actJson?.nombre ?: "Actividad",
+                                totalPreguntas = when (actJson?.tipo) {
+                                    "reto" -> 10 // reto tiene 10 acciones
+                                    else -> (datos as? List<*>)?.size ?: 0
+                                },
                                 onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    val monedas = preguntas.nivel(nivelId)?.monedas ?: 20
-                                    progreso.completarActividad(nivelId, actividadId, puntaje, monedas)
+                                onTerminada = { puntaje, porcentaje ->
+                                    val monedasNivel = preguntas.nivel(nivelId)?.monedas ?: 20
+                                    val totalMonedasAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    val estrellasGanadas = progreso.registrarResultadoActividad(
+                                        nivelId, actividadId, porcentaje, monedasNivel
+                                    )
+                                    val totalMonedasDespues = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    // El premio muestra SOLO lo que realmente se añadió al total (la diferencia)
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    // Estrellas asignadas de la actividad (según nivel y posición)
+                                    val totalAct = actividadesPorNivel[nivelId] ?: 1
+                                    val estrellasPremio = progreso.estrellasAsignadasActividad(
+                                        nivelId, actividadId, totalAct
+                                    )
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasPremio/$monedasGanadas"
+                                    ) {
                                         popUpTo("${NutriRoutes.ACTIVIDAD}/$nivelId/$actividadId") { inclusive = true }
                                     }
                                 }
                             )
                         }
-                        composable(NutriRoutes.ACTIVIDAD_DESCUBRE) {
-                            DescubreAlimentosScreen(
-                                alimentos = CatalogoAlimentos.TODOS,
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(1, 1, puntaje, 20)
-                                    versionProgreso++
-                                    // El premio reemplaza al minijuego en el stack,
-                                    // así "Continuar" regresa a la lista de actividades
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_DESCUBRE) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_GRUPO) {
-                            GrupoPerteneceScreen(
-                                grupos = GruposAlimenticios.TODOS,
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(1, 2, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_GRUPO) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_VF) {
-                            val vfData = preguntas.actividadesDelNivel(2)
-                                .firstOrNull { it.tipo == "vf" }
-                            VerdaderoFalsoScreen(
-                                preguntas = vfData?.let { ActividadMapper.preguntasVF(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(2, vfData?.id ?: 1, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_VF) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_FRASE) {
-                            val fraseData = preguntas.actividadesDelNivel(2)
-                                .firstOrNull { it.tipo == "completa" }
-                            CompletaFraseScreen(
-                                frases = fraseData?.let { act ->
-                                    ActividadMapper.frases(act).map { frase ->
-                                        com.codidevs.nutriapp.ui.actividades.FraseIncompleta(
-                                            emoji = frase.emoji,
-                                            fraseAntes = frase.antes,
-                                            fraseDespues = frase.despues,
-                                            respuesta = frase.respuesta,
-                                            opciones = frase.opciones
-                                        )
-                                    }
-                                } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(2, fraseData?.id ?: 2, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_FRASE) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_MEJOR) {
-                            val mejorData = preguntas.actividadesDelNivel(3)
-                                .firstOrNull { it.tipo == "mejor_opcion" }
-                            MejorOpcionNivel2Screen(
-                                preguntas = mejorData?.let { ActividadMapper.mejorOpcion(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(3, mejorData?.id ?: 1, puntaje, 25)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_MEJOR) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_RULETA) {
-                            val ruletaData = preguntas.actividadesDelNivel(3)
-                                .firstOrNull { it.tipo == "ruleta" }
-                            RuedaAlimentacionScreen(
-                                alimentos = ruletaData?.let { ActividadMapper.ruleta(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(3, 2, puntaje, 25)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_RULETA) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_MEMORIA) {
-                            val memoriaData = preguntas.actividadesDelNivel(1)
-                                .firstOrNull { it.tipo == "memoria" }
-                            MemoriaNutritivaScreen(
-                                pares = memoriaData?.let { ActividadMapper.memoria(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(1, 3, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_MEMORIA) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_DESCUBRE_N2) {
-                            DescubreNutrientesScreen(
-                                nutrientes = CatalogoNutrientes.TODOS,
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(2, 1, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_DESCUBRE_N2) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_VF_N2) {
-                            val vfData = preguntas.actividadesDelNivel(2)
-                                .firstOrNull { it.tipo == "vf" }
-                            VerdaderoFalsoScreen(
-                                preguntas = vfData?.let { ActividadMapper.preguntasVF(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(2, vfData?.id ?: 1, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_VF_N2) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_FRASE_N2) {
-                            val fraseData = preguntas.actividadesDelNivel(2)
-                                .firstOrNull { it.tipo == "completa" }
-                            CompletaFraseScreen(
-                                frases = fraseData?.let { act ->
-                                    ActividadMapper.frases(act).map { frase ->
-                                        com.codidevs.nutriapp.ui.actividades.FraseIncompleta(
-                                            emoji = frase.emoji,
-                                            fraseAntes = frase.antes,
-                                            fraseDespues = frase.despues,
-                                            respuesta = frase.respuesta,
-                                            opciones = frase.opciones
-                                        )
-                                    }
-                                } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(2, fraseData?.id ?: 2, puntaje, 20)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_FRASE_N2) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_MEJOR_N2) {
-                            val mejorData = preguntas.actividadesDelNivel(3)
-                                .firstOrNull { it.tipo == "mejor_opcion" }
-                            MejorOpcionNivel2Screen(
-                                preguntas = mejorData?.let { ActividadMapper.mejorOpcion(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(3, mejorData?.id ?: 1, puntaje, 25)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_MEJOR_N2) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_QUIZ) {
-                            val quizData = preguntas.actividadesDelNivel(4)
-                                .firstOrNull { it.tipo == "quiz" }
-                            QuizScreen(
-                                preguntas = quizData?.let { ActividadMapper.quiz(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(4, 1, puntaje, 30)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_QUIZ) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_SEMAFORO) {
-                            val semaforoData = preguntas.actividadesDelNivel(6)
-                                .firstOrNull { it.tipo == "semaforo" }
-                            SemaforoScreen(
-                                datos = semaforoData?.let { ActividadMapper.semaforo(it) }
-                                    ?: SemaforoDatos(emptyList(), emptyList(), emptyList()),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(6, 2, puntaje, 25)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_SEMAFORO) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable(NutriRoutes.ACTIVIDAD_RETO) {
-                            val retoData = preguntas.actividadesDelNivel(6)
-                                .firstOrNull { it.tipo == "reto" }
-                            RetoScreen(
-                                acciones = retoData?.let { ActividadMapper.reto(it) } ?: emptyList(),
-                                onBack = { navController.popBackStack() },
-                                onTerminada = { puntaje ->
-                                    progreso.completarActividad(6, 3, puntaje, 25)
-                                    versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
-                                        popUpTo(NutriRoutes.ACTIVIDAD_RETO) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        // ---- Minijuegos libres (pestaña Juegos): otorgan monedas sin marcar nivel ----
+                        // ---- Minijuegos libres (pestaña Juegos) ----
+                        // Recompensan solo si se supera el mejor desempeño anterior (anti-farmeo).
+                        // El premio muestra lo que realmente se sumó al total (la diferencia).
                         composable(NutriRoutes.JUEGO_ARRASTRAR) {
                             GrupoPerteneceScreen(
                                 grupos = GruposAlimenticios.TODOS,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje ->
-                                    progreso.sumarRecompensa(puntaje, 10)
-                                    progreso.completarMinijuego("arrastrar")
+                                    val porcentaje = (puntaje * 100 / 60).coerceIn(0, 100) // 6 rondas x 10
+                                    val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
+                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    if (estrellas > progreso.estrellasMinijuego("arrastrar")) {
+                                        progreso.setEstrellasMinijuego("arrastrar", estrellas)
+                                    }
+                                    val monedasGanadas = (progreso.monedasTotales(
+                                        monedasPorNivel, actividadesPorNivel
+                                    ) - totalAntes).coerceAtLeast(0)
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                    ) {
                                         popUpTo(NutriRoutes.JUEGO_ARRASTRAR) { inclusive = true }
                                     }
                                 }
                             )
                         }
                         composable(NutriRoutes.JUEGO_VF) {
-                            val vfData = preguntas.actividadesDelNivel(2)
+                            // Mezcla V/F de alimentos (nivel 2) y deporte (nivel 5), fijado con remember
+                            val vfAlimentos = preguntas.actividadesDelNivel(2)
                                 .firstOrNull { it.tipo == "vf" }
+                            val vfDeporte = preguntas.actividadesDelNivel(5)
+                                .firstOrNull { it.tipo == "vf" }
+                            val preguntasVF = remember {
+                                ((vfAlimentos?.let { ActividadMapper.preguntasVF(it) } ?: emptyList()) +
+                                    (vfDeporte?.let { ActividadMapper.preguntasVF(it) } ?: emptyList())).shuffled()
+                            }
                             VerdaderoFalsoScreen(
-                                preguntas = vfData?.let { ActividadMapper.preguntasVF(it) } ?: emptyList(),
+                                preguntas = preguntasVF,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje ->
-                                    progreso.sumarRecompensa(puntaje, 10)
-                                    progreso.completarMinijuego("vf")
+                                    val maximo = preguntasVF.size * 10
+                                    val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
+                                    val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
+                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    if (estrellas > progreso.estrellasMinijuego("vf")) {
+                                        progreso.setEstrellasMinijuego("vf", estrellas)
+                                    }
+                                    val monedasGanadas = (progreso.monedasTotales(
+                                        monedasPorNivel, actividadesPorNivel
+                                    ) - totalAntes).coerceAtLeast(0)
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                    ) {
                                         popUpTo(NutriRoutes.JUEGO_VF) { inclusive = true }
                                     }
                                 }
                             )
                         }
                         composable(NutriRoutes.JUEGO_COMPLETA) {
-                            val fraseData = preguntas.actividadesDelNivel(2)
+                            // Mezcla frases de alimentos (nivel 2) y hábitos/deporte (nivel 7), fijado con remember
+                            val fraseAlimentos = preguntas.actividadesDelNivel(2)
                                 .firstOrNull { it.tipo == "completa" }
-                            CompletaFraseScreen(
-                                frases = fraseData?.let { act ->
-                                    ActividadMapper.frases(act).map { frase ->
+                            val fraseHabitos = preguntas.actividadesDelNivel(7)
+                                .firstOrNull { it.tipo == "completa" }
+                            val frases = remember {
+                                ((fraseAlimentos?.let { ActividadMapper.frases(it) } ?: emptyList()) +
+                                    (fraseHabitos?.let { ActividadMapper.frases(it) } ?: emptyList()))
+                                    .map { frase ->
                                         com.codidevs.nutriapp.ui.actividades.FraseIncompleta(
                                             emoji = frase.emoji,
                                             fraseAntes = frase.antes,
@@ -663,30 +514,62 @@ class MainActivity : ComponentActivity() {
                                             respuesta = frase.respuesta,
                                             opciones = frase.opciones
                                         )
-                                    }
-                                } ?: emptyList(),
+                                    }.shuffled()
+                            }
+                            CompletaFraseScreen(
+                                frases = frases,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje ->
-                                    progreso.sumarRecompensa(puntaje, 10)
-                                    progreso.completarMinijuego("completa")
+                                    val maximo = frases.size * 10
+                                    val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
+                                    val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
+                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    if (estrellas > progreso.estrellasMinijuego("completa")) {
+                                        progreso.setEstrellasMinijuego("completa", estrellas)
+                                    }
+                                    val monedasGanadas = (progreso.monedasTotales(
+                                        monedasPorNivel, actividadesPorNivel
+                                    ) - totalAntes).coerceAtLeast(0)
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                    ) {
                                         popUpTo(NutriRoutes.JUEGO_COMPLETA) { inclusive = true }
                                     }
                                 }
                             )
                         }
                         composable(NutriRoutes.JUEGO_MEJOR) {
-                            val mejorData = preguntas.actividadesDelNivel(3)
+                            // Mezcla mejor opción de alimentos (nivel 3), plato saludable (4) y hábitos (6), fijado con remember
+                            val mejorAlimentos = preguntas.actividadesDelNivel(3)
                                 .firstOrNull { it.tipo == "mejor_opcion" }
+                            val mejorDeporte1 = preguntas.actividadesDelNivel(4)
+                                .firstOrNull { it.tipo == "mejor_opcion" }
+                            val mejorDeporte2 = preguntas.actividadesDelNivel(6)
+                                .firstOrNull { it.tipo == "mejor_opcion" }
+                            val preguntasMejor = remember {
+                                ((mejorAlimentos?.let { ActividadMapper.mejorOpcion(it) } ?: emptyList()) +
+                                    (mejorDeporte1?.let { ActividadMapper.mejorOpcion(it) } ?: emptyList()) +
+                                    (mejorDeporte2?.let { ActividadMapper.mejorOpcion(it) } ?: emptyList())).shuffled()
+                            }
                             MejorOpcionNivel2Screen(
-                                preguntas = mejorData?.let { ActividadMapper.mejorOpcion(it) } ?: emptyList(),
+                                preguntas = preguntasMejor,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje ->
-                                    progreso.sumarRecompensa(puntaje, 10)
-                                    progreso.completarMinijuego("mejor")
+                                    val maximo = preguntasMejor.size * 10
+                                    val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
+                                    val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
+                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    if (estrellas > progreso.estrellasMinijuego("mejor")) {
+                                        progreso.setEstrellasMinijuego("mejor", estrellas)
+                                    }
+                                    val monedasGanadas = (progreso.monedasTotales(
+                                        monedasPorNivel, actividadesPorNivel
+                                    ) - totalAntes).coerceAtLeast(0)
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                    ) {
                                         popUpTo(NutriRoutes.JUEGO_MEJOR) { inclusive = true }
                                     }
                                 }
@@ -695,37 +578,77 @@ class MainActivity : ComponentActivity() {
                         composable(NutriRoutes.JUEGO_RULETA) {
                             val ruletaData = preguntas.actividadesDelNivel(3)
                                 .firstOrNull { it.tipo == "ruleta" }
+                            val alimentosRuleta = remember {
+                                ruletaData?.let { ActividadMapper.ruleta(it) } ?: emptyList()
+                            }
                             RuedaAlimentacionScreen(
-                                alimentos = ruletaData?.let { ActividadMapper.ruleta(it) } ?: emptyList(),
+                                alimentos = alimentosRuleta,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje ->
-                                    progreso.sumarRecompensa(puntaje, 10)
-                                    progreso.completarMinijuego("ruleta")
+                                    val maximo = alimentosRuleta.size * 10
+                                    val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
+                                    val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
+                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    if (estrellas > progreso.estrellasMinijuego("ruleta")) {
+                                        progreso.setEstrellasMinijuego("ruleta", estrellas)
+                                    }
+                                    val monedasGanadas = (progreso.monedasTotales(
+                                        monedasPorNivel, actividadesPorNivel
+                                    ) - totalAntes).coerceAtLeast(0)
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                    ) {
                                         popUpTo(NutriRoutes.JUEGO_RULETA) { inclusive = true }
                                     }
                                 }
                             )
                         }
                         composable(NutriRoutes.JUEGO_MEMORIA) {
-                            val memoriaData = preguntas.actividadesDelNivel(1)
+                            // Mezcla memoria de alimentos (nivel 1) con deporte (nivel 7),
+                            // limitada a 8 parejas para que no estrese, fijada con remember
+                            val memoriaAlimentos = preguntas.actividadesDelNivel(1)
                                 .firstOrNull { it.tipo == "memoria" }
+                            val memoriaDeporte = preguntas.actividadesDelNivel(7)
+                                .firstOrNull { it.tipo == "une" }
+                            val pares = remember {
+                                val todas = (memoriaAlimentos?.let { ActividadMapper.memoria(it) } ?: emptyList()) +
+                                    (memoriaDeporte?.let { ActividadMapper.une(it).map { u ->
+                                        com.codidevs.nutriapp.ui.actividades.ParMemoria(u.emoji, u.texto)
+                                    } } ?: emptyList())
+                                todas.shuffled().take(8)
+                            }
                             MemoriaNutritivaScreen(
-                                pares = memoriaData?.let { ActividadMapper.memoria(it) } ?: emptyList(),
+                                pares = pares,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje ->
-                                    progreso.sumarRecompensa(puntaje, 10)
-                                    progreso.completarMinijuego("memoria")
+                                    val maximo = pares.size * 10
+                                    val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
+                                    val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
+                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                    if (estrellas > progreso.estrellasMinijuego("memoria")) {
+                                        progreso.setEstrellasMinijuego("memoria", estrellas)
+                                    }
+                                    val monedasGanadas = (progreso.monedasTotales(
+                                        monedasPorNivel, actividadesPorNivel
+                                    ) - totalAntes).coerceAtLeast(0)
                                     versionProgreso++
-                                    navController.navigate(NutriRoutes.PREMIO) {
+                                    navController.navigate(
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                    ) {
                                         popUpTo(NutriRoutes.JUEGO_MEMORIA) { inclusive = true }
                                     }
                                 }
                             )
                         }
-                        composable(NutriRoutes.PREMIO) {
+                        composable(
+                            "${NutriRoutes.PREMIO}/{porcentaje}/{estrellas}/{monedas}"
+                        ) { backStackEntry ->
+                            val args = backStackEntry.arguments
                             PremioScreen(
+                                porcentaje = args?.getString("porcentaje")?.toIntOrNull() ?: 100,
+                                estrellas = args?.getString("estrellas")?.toIntOrNull() ?: 0,
+                                monedas = args?.getString("monedas")?.toIntOrNull() ?: 0,
                                 onContinuar = { navController.popBackStack() }
                             )
                         }
@@ -744,7 +667,7 @@ class MainActivity : ComponentActivity() {
                                 nutricionCompleto, actividadCompleto, todosNiveles, minijuegosCompleto
                             )
                             RecompensasScreen(
-                                monedas = progreso.monedasTotal,
+                                monedas = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel),
                                 medallas = medallas,
                                 canjeadas = remember(versionProgreso) {
                                     medallas.filter { progreso.recompensaCanjeada(it.id) }.map { it.id }.toSet()

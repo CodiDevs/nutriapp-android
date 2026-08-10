@@ -21,7 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.codidevs.nutriapp.data.models.GrupoAlimenticio
+import com.codidevs.nutriapp.ui.components.AlimentoFigura
 import com.codidevs.nutriapp.ui.components.ScreenHeader
 import com.codidevs.nutriapp.ui.theme.Berry
 import com.codidevs.nutriapp.ui.theme.BerryLight
@@ -59,6 +61,8 @@ fun GrupoPerteneceScreen(
     var indice by remember { mutableStateOf(0) }
     var puntaje by remember { mutableStateOf(0) }
     var retro by remember { mutableStateOf<String?>(null) }
+    // Grupo donde se soltó la figura con su resultado ("correcto"/"incorrecto")
+    var grupoResultado by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     // Arrastre: todo se mide en coordenadas GLOBALES de pantalla (positionInRoot)
     // para que tarjeta, grupos y el punto del dedo estén en el mismo sistema.
@@ -85,12 +89,15 @@ fun GrupoPerteneceScreen(
             .pointerInput(alimento, indice, posBoxRaiz) {
                 detectDragGestures(
                     onDragStart = { pos ->
-                        // Convierte el punto (local del Box) a global de pantalla
-                        val puntoGlobal = posBoxRaiz + pos
-                        if (rectTarjeta.contains(puntoGlobal)) {
-                            inicioDrag = puntoGlobal
-                            ultimoPunto = puntoGlobal
-                            arrastrando = true
+                        // Solo se arrastra si aún no ha respondido (retro == null)
+                        if (retro == null) {
+                            // Convierte el punto (local del Box) a global de pantalla
+                            val puntoGlobal = posBoxRaiz + pos
+                            if (rectTarjeta.contains(puntoGlobal)) {
+                                inicioDrag = puntoGlobal
+                                ultimoPunto = puntoGlobal
+                                arrastrando = true
+                            }
                         }
                     },
                     onDrag = { change, _ ->
@@ -108,18 +115,29 @@ fun GrupoPerteneceScreen(
                             val punto = ultimoPunto ?: (inicioDrag ?: Offset.Zero)
                             val grupoSoltado = grupoMasCercano(punto, posicionesGrupo)
                             when (grupoSoltado) {
-                                null -> { /* soltó lejos de cualquier grupo: no pasa nada */ }
+                                null -> {
+                                    // Soltó lejos de cualquier grupo: la figura vuelve a su lugar
+                                    dragOffset = Offset.Zero
+                                    grupoResultado = null
+                                }
                                 ronda.second.nombre -> {
                                     puntaje += 10
                                     retro = "correcto"
+                                    // La figura se queda donde la soltó (sobre el grupo correcto)
+                                    dragOffset = punto - (inicioDrag ?: punto)
+                                    grupoResultado = grupoSoltado to "correcto"
                                 }
-                                else -> retro = "incorrecto"
+                                else -> {
+                                    retro = "incorrecto"
+                                    // La figura se queda donde la soltó (sobre el grupo equivocado)
+                                    dragOffset = punto - (inicioDrag ?: punto)
+                                    grupoResultado = grupoSoltado to "incorrecto"
+                                }
                             }
                         }
                         arrastrando = false
                         inicioDrag = null
                         ultimoPunto = null
-                        dragOffset = Offset.Zero
                         zonaSobre = null
                     },
                     onDragCancel = {
@@ -169,10 +187,12 @@ fun GrupoPerteneceScreen(
             Spacer(Modifier.height(12.dp))
 
             // Tarjeta del alimento (arrastrable): emoji + nombre
+            // El Box contenedor tiene zIndex alto para que la figura quede encima de los grupos
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(110.dp),
+                    .height(110.dp)
+                    .zIndex(10f),
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
@@ -190,7 +210,11 @@ fun GrupoPerteneceScreen(
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        Text(text = alimento.emoji, fontSize = 40.sp)
+                        AlimentoFigura(
+                            nombre = alimento.nombre,
+                            emoji = alimento.emoji,
+                            tamano = 40
+                        )
                         Text(
                             text = alimento.nombre,
                             style = MaterialTheme.typography.labelSmall,
@@ -211,6 +235,7 @@ fun GrupoPerteneceScreen(
                             ZonaGrupo(
                                 grupo = grupo,
                                 resaltada = zonaSobre == grupo.nombre,
+                                resultado = grupoResultado?.takeIf { it.first == grupo.nombre }?.second,
                                 modifier = Modifier.weight(1f),
                                 onPosicion = { nombre, rect -> posicionesGrupo[nombre] = rect }
                             )
@@ -253,6 +278,8 @@ fun GrupoPerteneceScreen(
                         } else {
                             indice++
                             retro = null
+                            grupoResultado = null
+                            dragOffset = Offset.Zero // la figura vuelve a su lugar en la nueva ronda
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Leaf),
@@ -274,13 +301,24 @@ fun GrupoPerteneceScreen(
 private fun ZonaGrupo(
     grupo: GrupoAlimenticio,
     resaltada: Boolean,
+    resultado: String?, // "correcto" | "incorrecto" | null
     modifier: Modifier = Modifier,
     onPosicion: (String, Rect) -> Unit
 ) {
+    val colorFondo = when (resultado) {
+        "correcto" -> LeafLight      // verde pastel
+        "incorrecto" -> BerryLight   // rojo pastel
+        else -> if (resaltada) LeafLight else Color.White
+    }
+    val colorBorde = when (resultado) {
+        "correcto" -> Leaf
+        "incorrecto" -> Berry
+        else -> if (resaltada) Mango else LineColor
+    }
     Surface(
-        color = if (resaltada) LeafLight else Color.White,
+        color = colorFondo,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(if (resaltada) 3.dp else 2.dp, if (resaltada) Mango else LineColor),
+        border = BorderStroke(if (resaltada || resultado != null) 3.dp else 2.dp, colorBorde),
         modifier = modifier
             .height(96.dp)
             .onGloballyPositioned { coords ->
@@ -298,7 +336,9 @@ private fun ZonaGrupo(
                 text = grupo.nombre,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = if (resaltada) LeafDark else InkSoft,
+                color = if (resultado != null) {
+                    if (resultado == "correcto") LeafDark else Berry
+                } else if (resaltada) LeafDark else InkSoft,
                 textAlign = TextAlign.Center
             )
         }

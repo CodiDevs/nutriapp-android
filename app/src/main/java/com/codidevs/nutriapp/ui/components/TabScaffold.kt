@@ -15,9 +15,9 @@ import androidx.compose.ui.unit.dp
 fun TabScaffold(
     tabActiva: String,
     onTab: (String) -> Unit,
-    monedas: String = "🪙 240",
-    racha: String = "🔥 5",
-    corazones: String = "❤️ 5",
+    monedas: String = "🪙 0",
+    racha: String = "🔥 0",
+    estrellas: String = "⭐ 0",
     content: @Composable (Modifier) -> Unit
 ) {
     Scaffold(
@@ -33,8 +33,8 @@ fun TabScaffold(
         ) {
             StatsBar(
                 racha = racha,
+                estrellas = estrellas,
                 monedas = monedas,
-                corazones = corazones,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
             content(Modifier.weight(1f))

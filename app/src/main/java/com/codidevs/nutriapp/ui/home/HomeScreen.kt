@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.ui.components.NotaMensaje
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.LeafDark
@@ -118,36 +119,14 @@ fun HomeScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // Figura decorativa para niños
-        Surface(
-            color = LeafLight,
-            shape = RoundedCornerShape(22.dp),
-            border = BorderStroke(2.dp, LeafDark.copy(alpha = 0.3f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(text = "🦸", fontSize = 44.sp)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "¡Tú puedes, superhéroe de la salud!",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = LeafDark
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = "Sigue aprendiendo y ganando monedas",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = InkSoft,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        // Nota motivadora (estilo nota adhesiva, no botón)
+        NotaMensaje(
+            emoji = "🦸",
+            titulo = "¡Tú puedes, superhéroe de la salud!",
+            subtitulo = "Sigue aprendiendo y ganando monedas",
+            colorFondo = LeafLight,
+            colorTexto = LeafDark
+        )
 
         Spacer(Modifier.height(20.dp))
     }

@@ -28,28 +28,16 @@ data class ActividadInfo(
     val completada: Boolean = false
 )
 
-/** Las 7 actividades del Nivel 1 (según el maquetado y las indicaciones).
- *  Todas inician pendientes: se marcan completadas cuando el niño las juega. */
-val ACTIVIDADES_NIVEL_1 = listOf(
-    ActividadInfo(1, "🔍", "Descubre los alimentos"),
-    ActividadInfo(2, "🥦", "¿A qué grupo pertenece?"),
-    ActividadInfo(3, "✅", "Verdadero o falso"),
-    ActividadInfo(4, "✏️", "Completa la frase"),
-    ActividadInfo(5, "🍽️", "La mejor opción"),
-    ActividadInfo(6, "🎡", "Rueda de la alimentación"),
-    ActividadInfo(7, "🧠", "Memoria nutritiva")
-)
-
 @Composable
 fun ActividadesScreen(
     nivelNumero: Int,
     actividades: List<ActividadInfo>,
-    completadas: Set<Int>,
+    estrellas: Map<Int, Int>, // actividadId -> estrellas (0-3, -1 si no jugada)
     onBack: () -> Unit,
     onActividadClick: (ActividadInfo) -> Unit,
     onNivelCompletado: () -> Unit
 ) {
-    val nivelCompleto = actividades.all { it.id in completadas }
+    val nivelCompleto = actividades.all { (estrellas[it.id] ?: 0) > 0 }
 
     Column(
         modifier = Modifier
@@ -66,7 +54,7 @@ fun ActividadesScreen(
                 FilaActividad(
                     numero = index + 1,
                     actividad = actividad,
-                    completada = actividad.id in completadas,
+                    estrellas = estrellas[actividad.id] ?: -1,
                     onClick = { onActividadClick(actividad) }
                 )
             }
@@ -98,9 +86,11 @@ fun ActividadesScreen(
 private fun FilaActividad(
     numero: Int,
     actividad: ActividadInfo,
-    completada: Boolean,
+    estrellas: Int, // -1 no jugada, 0-3 estrellas
     onClick: () -> Unit
 ) {
+    val jugada = estrellas >= 0
+    val completada = estrellas > 0
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -136,15 +126,28 @@ private fun FilaActividad(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = if (completada) "Completada" else "Pendiente",
+                    text = when {
+                        !jugada -> "Pendiente"
+                        estrellas == 0 -> "Intentada · sin estrellas"
+                        else -> "Completada"
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = if (completada) LeafDark else InkSoft
                 )
             }
 
-            if (completada) {
-                Text(text = "✓", fontSize = 18.sp, color = LeafDark)
+            // Estrellas ganadas
+            if (jugada) {
+                Text(
+                    text = when (estrellas) {
+                        3 -> "⭐⭐⭐"
+                        2 -> "⭐⭐"
+                        1 -> "⭐"
+                        else -> "☆"
+                    },
+                    fontSize = 14.sp
+                )
             }
         }
     }

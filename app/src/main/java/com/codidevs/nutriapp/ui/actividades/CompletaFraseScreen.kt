@@ -27,7 +27,6 @@ import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoDark
-import com.codidevs.nutriapp.data.models.FraseNivel2
 
 data class FraseIncompleta(
     val emoji: String,
@@ -35,19 +34,6 @@ data class FraseIncompleta(
     val fraseDespues: String,
     val respuesta: String,
     val opciones: List<String>
-)
-
-/** 9 frases incompletas del Módulo 1 (y algunas de hábitos), según las indicaciones. */
-val FRASES_NIVEL1 = listOf(
-    FraseIncompleta("🍎", "Las frutas tienen muchas", ".", "vitaminas", listOf("vitaminas", "proteínas", "grasas", "minerales")),
-    FraseIncompleta("🥩", "La carne tiene muchas", ".", "proteínas", listOf("vitaminas", "proteínas", "calcio", "fibra")),
-    FraseIncompleta("🥛", "La leche tiene mucho", ".", "calcio", listOf("calcio", "hierro", "azúcar", "sodio")),
-    FraseIncompleta("🍞", "El pan nos da", ".", "energía", listOf("calcio", "fibra", "energía", "vitaminas")),
-    FraseIncompleta("🥦", "Las verduras tienen mucha", ".", "fibra", listOf("grasa", "fibra", "azúcar", "proteína")),
-    FraseIncompleta("💧", "Debo tomar suficiente", "durante el día.", "agua", listOf("agua", "jugo", "leche", "gaseosa")),
-    FraseIncompleta("😴", "Debo dormir aproximadamente", "horas cada noche.", "9 a 11", listOf("5 a 6", "7 a 8", "9 a 11", "12 a 14")),
-    FraseIncompleta("🏃", "Debo hacer actividad física durante", "minutos al día.", "60", listOf("10", "30", "60", "90")),
-    FraseIncompleta("🥦", "Las verduras ayudan a cuidar mi", ".", "salud", listOf("peso", "salud", "color", "sabor"))
 )
 
 /**

@@ -37,7 +37,7 @@ private val MINIJUEGOS = listOf(
 
 @Composable
 fun JuegosScreen(
-    completados: Set<String>,
+    estrellas: Map<String, Int>, // id del minijuego -> estrellas (0-3, -1 no jugado)
     onMinijuegoClick: (String) -> Unit
 ) {
     Column(
@@ -57,7 +57,7 @@ fun JuegosScreen(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "¡Practica sin límites y gana monedas!",
+            text = "¡Practica alimentos y deporte, gana monedas!",
             style = MaterialTheme.typography.bodyMedium,
             color = InkSoft,
             fontWeight = FontWeight.Bold
@@ -72,7 +72,7 @@ fun JuegosScreen(
                     fila.forEach { juego ->
                         MinijuegoTarjeta(
                             juego = juego,
-                            completado = juego.id in completados,
+                            estrellas = estrellas[juego.id] ?: -1,
                             onClick = { onMinijuegoClick(juego.id) },
                             modifier = Modifier.weight(1f)
                         )
@@ -89,10 +89,11 @@ fun JuegosScreen(
 @Composable
 private fun MinijuegoTarjeta(
     juego: Minijuego,
-    completado: Boolean,
+    estrellas: Int, // -1 no jugado, 0-3
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val completado = estrellas >= 2
     Surface(
         color = if (completado) LeafLight else Color.White,
         shape = RoundedCornerShape(22.dp),
@@ -122,16 +123,19 @@ private fun MinijuegoTarjeta(
                 text = juego.nombre,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (completado) LeafDark else LeafDark,
+                color = LeafDark,
                 textAlign = TextAlign.Center
             )
-            if (completado) {
+            if (estrellas >= 0) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "✓ Completado",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = LeafDark
+                    text = when (estrellas) {
+                        3 -> "⭐⭐⭐"
+                        2 -> "⭐⭐"
+                        1 -> "⭐"
+                        else -> "☆"
+                    },
+                    fontSize = 13.sp
                 )
             }
         }

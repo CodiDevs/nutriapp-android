@@ -23,18 +23,6 @@ import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.data.models.PreguntaVF
 
-/** 8 preguntas de Verdadero/Falso del Módulo 1 (Nutrición), según las indicaciones. */
-val PREGUNTAS_VF_NIVEL1 = listOf(
-    PreguntaVF("🍎", "Las frutas tienen muchas vitaminas.", true),
-    PreguntaVF("🥛", "La leche ayuda a fortalecer los huesos.", true),
-    PreguntaVF("🍬", "Comer dulces todos los días es bueno para la salud.", false),
-    PreguntaVF("🍗", "El pollo ayuda a formar músculos.", true),
-    PreguntaVF("🥦", "Las verduras ayudan a prevenir enfermedades.", true),
-    PreguntaVF("🥤", "Las gaseosas deben reemplazar el agua.", false),
-    PreguntaVF("🍞", "El arroz nos da energía.", true),
-    PreguntaVF("🐟", "El pescado ayuda al cerebro.", true)
-)
-
 /**
  * Actividad "Verdadero o falso": el niño toca ✅ o ❌ según el enunciado.
  * Con aciertos suma puntos; al final llama a onTerminada(puntaje).

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import com.codidevs.nutriapp.ui.components.NotaMensaje
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Leaf
@@ -52,6 +53,7 @@ private val NIVELES = listOf(
 fun SenderoScreen(
     modulo: Int, // 1 = Nutrición (niveles 1-3), 2 = Actividad física (niveles 4-7)
     nivelesDesbloqueados: Int, // cuántos niveles están desbloqueados (1+)
+    estrellasNivel: Map<Int, Int>, // nivel -> estrellas totales (0-3)
     onNivelClick: (Int) -> Unit,
     onElegirModulo: () -> Unit,
     onCambiarModulo: () -> Unit
@@ -104,37 +106,13 @@ fun SenderoScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // Globo de la mascota (burbuja bonita)
-            Surface(
-                color = Color.White,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(2.dp, Sky),
-                shadowElevation = 4.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Círculo con la mascota
-                    Surface(
-                        color = Sky.copy(alpha = 0.15f),
-                        shape = CircleShape,
-                        modifier = Modifier.size(52.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(text = emojiMascota, fontSize = 28.sp)
-                        }
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = mensajeMascota,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Ink
-                    )
-                }
-            }
+            // Nota de la mascota (estilo nota adhesiva, no botón)
+            NotaMensaje(
+                emoji = emojiMascota,
+                titulo = mensajeMascota,
+                colorFondo = Sky.copy(alpha = 0.12f),
+                colorTexto = Ink
+            )
 
             Spacer(Modifier.height(20.dp))
 
@@ -142,6 +120,7 @@ fun SenderoScreen(
             niveles.forEach { nivel ->
                 NodoNivel(
                     nivel = nivel,
+                    estrellas = estrellasNivel[nivel.numero] ?: 0,
                     onClick = {
                         if (nivel.bloqueado) {
                             mostrarBloqueado = true
@@ -212,6 +191,7 @@ fun SenderoScreen(
 @Composable
 private fun NodoNivel(
     nivel: NivelSendero,
+    estrellas: Int,
     onClick: () -> Unit,
     reversed: Boolean
 ) {
@@ -223,40 +203,58 @@ private fun NodoNivel(
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (!reversed) {
-            Nodo(nivel = nivel, onClick = onClick)
+            Nodo(nivel = nivel, estrellas = estrellas, onClick = onClick)
             Spacer(Modifier.width(16.dp))
             Etiqueta(nivel = nivel, modifier = Modifier.weight(1f))
         } else {
             Etiqueta(nivel = nivel, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(16.dp))
-            Nodo(nivel = nivel, onClick = onClick)
+            Nodo(nivel = nivel, estrellas = estrellas, onClick = onClick)
         }
     }
 }
 
 @Composable
-private fun Nodo(nivel: NivelSendero, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(64.dp)
-            .shadow(4.dp, CircleShape)
-            .clickable(onClick = onClick)
-            .background(
-                color = if (nivel.bloqueado) Locked else Leaf,
-                shape = CircleShape
-            )
-            .border(3.dp, if (nivel.bloqueado) Color(0xFFB9B39E) else LeafDark, CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        // Borde punteado si es el nivel actual
-        if (nivel.actual) {
-            Box(
-                modifier = Modifier
-                    .size(78.dp)
-                    .border(3.dp, Mango, CircleShape)
+private fun Nodo(
+    nivel: NivelSendero,
+    estrellas: Int, // estrellas totales del nivel (0-3)
+    onClick: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .shadow(4.dp, CircleShape)
+                .clickable(onClick = onClick)
+                .background(
+                    color = if (nivel.bloqueado) Locked else Leaf,
+                    shape = CircleShape
+                )
+                .border(3.dp, if (nivel.bloqueado) Color(0xFFB9B39E) else LeafDark, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            // Borde punteado si es el nivel actual
+            if (nivel.actual) {
+                Box(
+                    modifier = Modifier
+                        .size(78.dp)
+                        .border(3.dp, Mango, CircleShape)
+                )
+            }
+            Text(text = nivel.emoji, fontSize = 28.sp)
+        }
+        // Estrellas del nivel debajo del nodo
+        if (estrellas > 0) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = when (estrellas) {
+                    3 -> "⭐⭐⭐"
+                    2 -> "⭐⭐"
+                    else -> "⭐"
+                },
+                fontSize = 12.sp
             )
         }
-        Text(text = nivel.emoji, fontSize = 28.sp)
     }
 }
 

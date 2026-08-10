@@ -183,7 +183,7 @@ private fun CartaMemoriaView(
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(2.dp, if (descubierta) Leaf else LeafDark),
         modifier = modifier
-            .aspectRatio(1f)
+            .height(68.dp)
             .clickable(enabled = !descubierta, onClick = onClick)
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -191,16 +191,17 @@ private fun CartaMemoriaView(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(4.dp)
+                    modifier = Modifier.padding(2.dp)
                 ) {
-                    Text(text = carta.emoji, fontSize = 20.sp)
+                    Text(text = carta.emoji, fontSize = 18.sp)
                     Text(
                         text = carta.texto,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = LeafDark,
                         textAlign = TextAlign.Center,
-                        fontSize = 9.sp
+                        fontSize = 10.sp,
+                        maxLines = 2
                     )
                 }
             } else {
