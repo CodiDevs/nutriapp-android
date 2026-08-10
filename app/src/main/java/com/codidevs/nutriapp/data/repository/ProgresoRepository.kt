@@ -42,6 +42,14 @@ class ProgresoRepository(context: Context) {
         else -> 0
     }
 
+    /** Monedas de un minijuego según sus estrellas de desempeño (1→5, 2→10, 3→15). */
+    fun monedasMinijuego(estrellas: Int): Int = when {
+        estrellas >= 3 -> 15
+        estrellas >= 2 -> 10
+        estrellas >= 1 -> 5
+        else -> 0
+    }
+
     /** Estrellas del mejor desempeño de una actividad (0-3, -1 si nunca se jugó). */
     fun estrellasActividad(nivel: Int, actividadId: Int): Int {
         val pct = prefs.getInt("porcentaje_nivel_${nivel}_actividad_${actividadId}", -1)
@@ -192,10 +200,10 @@ class ProgresoRepository(context: Context) {
                 if (pct > 0) total += (monedasNivel * pct / 100)
             }
         }
-        // Minijuegos libres: 10 monedas si tienen 2+ estrellas
+        // Minijuegos libres: monedas según estrellas de desempeño (1→5, 2→10, 3→15)
         listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria").forEach { id ->
             val est = prefs.getInt("minijuego_estrellas_$id", -1)
-            if (est >= 2) total += 10
+            if (est > 0) total += monedasMinijuego(est)
         }
         // Descuenta lo gastado en recompensas canjeadas
         return (total - prefs.getInt("monedas_gastadas", 0)).coerceAtLeast(0)

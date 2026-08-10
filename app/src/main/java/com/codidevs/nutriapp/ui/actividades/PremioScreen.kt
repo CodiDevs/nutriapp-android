@@ -38,16 +38,15 @@ fun PremioScreen(
     // Evita que el niño presione Continuar muchas veces y rompa la navegación
     var yaPresionado by remember { mutableStateOf(false) }
 
-    // Estado según las estrellas asignadas (1-3 según nivel, 0 si no completó)
+    // Mensaje y color según desempeño (porcentaje); las estrellas mostradas son la recompensa asignada.
     val (emoji, titulo, color) = when {
-        estrellas >= 3 -> Triple("🎉", "¡Excelente!", Leaf)
-        estrellas >= 2 -> Triple("🎉", "¡Excelente!", Leaf)
-        estrellas == 1 -> Triple("👍", "¡Bien hecho!", Mango)
+        porcentaje >= 70 -> Triple("🎉", "¡Excelente!", Leaf)
+        porcentaje >= 40 -> Triple("👍", "¡Bien hecho!", Mango)
         else -> Triple("💪", "¡Sigue intentando!", Berry)
     }
     val mensaje = when {
-        estrellas >= 2 -> "¡Completaste la actividad!"
-        estrellas == 1 -> "Vas muy bien, sigue practicando"
+        porcentaje >= 70 -> "¡Completaste la actividad!"
+        porcentaje >= 40 -> "Vas muy bien, sigue practicando"
         else -> "No te rindas, ¡tú puedes!"
     }
 
