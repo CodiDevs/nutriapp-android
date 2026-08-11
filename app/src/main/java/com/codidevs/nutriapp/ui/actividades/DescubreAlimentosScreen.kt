@@ -79,7 +79,10 @@ fun DescubreAlimentosScreen(
 
         // Tarjeta del alimento: al tocarla revela el beneficio
         Card(
-            onClick = { revelado = true },
+            onClick = {
+                com.codidevs.nutriapp.data.audio.SoundManager.click()
+                revelado = true
+            },
             colors = CardDefaults.cardColors(containerColor = Color.White),
             border = BorderStroke(2.dp, if (revelado) Leaf else LineColor),
             shape = RoundedCornerShape(24.dp),
@@ -103,6 +106,13 @@ fun DescubreAlimentosScreen(
                 Spacer(Modifier.height(16.dp))
 
                 if (revelado) {
+                    Text(
+                        text = "✅ ¡Descubierto! +10 puntos",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = LeafDark
+                    )
+                    Spacer(Modifier.height(8.dp))
                     Surface(
                         color = LeafLight,
                         shape = RoundedCornerShape(16.dp),
@@ -133,7 +143,7 @@ fun DescubreAlimentosScreen(
 
         // Botón siguiente / terminar
         Button(
-            onClick = {
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                 if (indice + 1 >= alimentos.size) {
                     onTerminada(10)
                 } else {

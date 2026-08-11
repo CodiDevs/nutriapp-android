@@ -32,6 +32,7 @@ fun PremioScreen(
     porcentaje: Int = 100,
     estrellas: Int = 0,
     monedas: Int = 0,
+    puntos: Int = 0,
     medallas: Int = 0,
     onContinuar: () -> Unit
 ) {
@@ -79,20 +80,27 @@ fun PremioScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // Recompensas (solo si ganó algo)
+        // Recompensas (siempre visibles, incluso si son 0)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.Center
         ) {
-            if (estrellas > 0) PremioItem("⭐", "+$estrellas")
-            if (monedas > 0) PremioItem("🪙", "+$monedas")
-            if (medallas > 0) PremioItem("🏅", "+$medallas")
+            PremioItem("⭐", "+$estrellas")
+            Spacer(Modifier.width(10.dp))
+            PremioItem("🪙", "+$monedas")
+            Spacer(Modifier.width(10.dp))
+            PremioItem("✨", "+$puntos")
+            
+            if (medallas > 0) {
+                Spacer(Modifier.width(10.dp))
+                PremioItem("🏅", "+$medallas")
+            }
         }
 
         Spacer(Modifier.height(36.dp))
 
         Button(
-            onClick = {
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                 if (!yaPresionado) {
                     yaPresionado = true
                     onContinuar()

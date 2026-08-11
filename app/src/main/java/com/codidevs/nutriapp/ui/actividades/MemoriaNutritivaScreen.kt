@@ -59,6 +59,7 @@ fun MemoriaNutritivaScreen(
     var puntaje by remember { mutableStateOf(0) }
     var bloqueado by remember { mutableStateOf(false) }
     var parejasEncontradas by remember { mutableStateOf(0) }
+    var mensajeFeedback by remember { mutableStateOf<String?>(null) }
 
     fun alTocar(id: Int) {
         if (bloqueado) return
@@ -75,13 +76,23 @@ fun MemoriaNutritivaScreen(
                 parejasEncontradas++
                 seleccionadas = emptyList()
                 volteadas = volteadas + a + b
+                mensajeFeedback = "✅ ¡Pareja encontrada! +10 puntos"
                 bloqueado = false
             } else {
                 // No es pareja: se voltean de nuevo tras un momento
                 seleccionadas = nueva
+                mensajeFeedback = "❌ No son iguales"
             }
         } else {
             seleccionadas = nueva
+        }
+    }
+
+    // Limpia el mensaje tras un momento
+    LaunchedEffect(mensajeFeedback) {
+        if (mensajeFeedback != null) {
+            kotlinx.coroutines.delay(1200)
+            mensajeFeedback = null
         }
     }
 
@@ -128,6 +139,20 @@ fun MemoriaNutritivaScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // Feedback temporal
+        Box(modifier = Modifier.fillMaxWidth().height(24.dp), contentAlignment = Alignment.Center) {
+            if (mensajeFeedback != null) {
+                Text(
+                    text = mensajeFeedback!!,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (mensajeFeedback!!.startsWith("✅")) LeafDark else InkSoft
+                )
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
         // Grilla 4x4 de cartas
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             cartas.chunked(4).forEach { fila ->
@@ -150,7 +175,7 @@ fun MemoriaNutritivaScreen(
         // Botón terminar cuando se encuentran todas
         if (parejasEncontradas == pares.size) {
             Button(
-                onClick = { onTerminada(puntaje) },
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onTerminada(puntaje) },
                 colors = ButtonDefaults.buttonColors(containerColor = Leaf),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)
@@ -184,7 +209,10 @@ private fun CartaMemoriaView(
         border = BorderStroke(2.dp, if (descubierta) Leaf else LeafDark),
         modifier = modifier
             .height(68.dp)
-            .clickable(enabled = !descubierta, onClick = onClick)
+            .clickable(enabled = !descubierta, onClick = {
+                com.codidevs.nutriapp.data.audio.SoundManager.click()
+                onClick()
+            })
     ) {
         Box(contentAlignment = Alignment.Center) {
             if (descubierta) {

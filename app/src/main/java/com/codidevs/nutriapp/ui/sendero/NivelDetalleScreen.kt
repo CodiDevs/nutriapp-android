@@ -26,7 +26,8 @@ data class NivelInfo(
     val titulo: String,
     val descripcion: String,
     val actividades: Int,
-    val monedas: String
+    val monedas: String,
+    val puntosMaximos: Int = 0
 )
 
 val NIVELES_INFO = listOf(
@@ -80,21 +81,29 @@ fun NivelDetalleScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // Stats: Actividades, Monedas, Estrellas
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            StatBox("${nivel.actividades}", "Actividades", Modifier.weight(1f))
-            StatBox(nivel.monedas, "Monedas", Modifier.weight(1f))
-            StatBox("⭐⭐⭐", "Estrellas", Modifier.weight(1f))
+        // Stats: Actividades, Monedas, Estrellas, Puntos
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                StatBox("${nivel.actividades}", "Actividades", Modifier.weight(1f))
+                StatBox(nivel.monedas, "Monedas", Modifier.weight(1f))
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                StatBox("⭐⭐⭐", "Estrellas", Modifier.weight(1f))
+                StatBox("${nivel.puntosMaximos}", "Puntos", Modifier.weight(1f))
+            }
         }
 
         Spacer(Modifier.height(28.dp))
 
         // Ver actividades
         Button(
-            onClick = onVerActividades,
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onVerActividades() },
             colors = ButtonDefaults.buttonColors(containerColor = Leaf),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().height(52.dp)

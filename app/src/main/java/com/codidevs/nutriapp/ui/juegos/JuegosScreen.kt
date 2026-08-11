@@ -73,7 +73,7 @@ fun JuegosScreen(
                         MinijuegoTarjeta(
                             juego = juego,
                             estrellas = estrellas[juego.id] ?: -1,
-                            onClick = { onMinijuegoClick(juego.id) },
+                            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onMinijuegoClick(juego.id) },
                             modifier = Modifier.weight(1f)
                         )
                     }

@@ -131,15 +131,15 @@ fun SemaforoScreen(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             OpcionSemaforo("🟢", "Todos los días", "verde", Leaf, respondio, esCorrecto, respuesta) {
                 respuesta = "verde"
-                if (it == "verde") puntaje += 10
+                if (actual.categoria == "verde") puntaje += 10
             }
             OpcionSemaforo("🟡", "Con moderación", "amarillo", Mango, respondio, esCorrecto, respuesta) {
                 respuesta = "amarillo"
-                if (it == "amarillo") puntaje += 10
+                if (actual.categoria == "amarillo") puntaje += 10
             }
             OpcionSemaforo("🔴", "Solo de vez en cuando", "rojo", Berry, respondio, esCorrecto, respuesta) {
                 respuesta = "rojo"
-                if (it == "rojo") puntaje += 10
+                if (actual.categoria == "rojo") puntaje += 10
             }
         }
 
@@ -166,7 +166,7 @@ fun SemaforoScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     if (indice + 1 >= alimentos.size) {
                         onTerminada(puntaje)
                     } else {
@@ -218,7 +218,10 @@ private fun OpcionSemaforo(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .clickableSinRipple(enabled = !respondio) { onClick(categoria) }
+            .clickableSinRipple(enabled = !respondio) {
+                com.codidevs.nutriapp.data.audio.SoundManager.click()
+                onClick(categoria)
+            }
     ) {
         Row(
             modifier = Modifier

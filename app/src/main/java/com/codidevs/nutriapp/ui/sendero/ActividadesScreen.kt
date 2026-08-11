@@ -20,12 +20,14 @@ import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
+import com.codidevs.nutriapp.ui.theme.Mango
 
 data class ActividadInfo(
     val id: Int,
     val emoji: String,
     val nombre: String,
-    val completada: Boolean = false
+    val completada: Boolean = false,
+    val porcentaje: Int = -1 // -1 si no jugada
 )
 
 @Composable
@@ -33,6 +35,7 @@ fun ActividadesScreen(
     nivelNumero: Int,
     actividades: List<ActividadInfo>,
     estrellas: Map<Int, Int>, // actividadId -> estrellas (0-3, -1 si no jugada)
+    porcentajes: Map<Int, Int>, // actividadId -> porcentaje (0-100, -1 si no jugada)
     onBack: () -> Unit,
     onActividadClick: (ActividadInfo) -> Unit,
     onNivelCompletado: () -> Unit
@@ -55,6 +58,7 @@ fun ActividadesScreen(
                     numero = index + 1,
                     actividad = actividad,
                     estrellas = estrellas[actividad.id] ?: -1,
+                    porcentaje = porcentajes[actividad.id] ?: -1,
                     onClick = { onActividadClick(actividad) }
                 )
             }
@@ -65,7 +69,7 @@ fun ActividadesScreen(
         // Botón de nivel completado: "Siguiente" (o "Finalizar" en el nivel 7)
         if (nivelCompleto) {
             Button(
-                onClick = onNivelCompletado,
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onNivelCompletado() },
                 colors = ButtonDefaults.buttonColors(containerColor = Leaf),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)
@@ -87,12 +91,13 @@ private fun FilaActividad(
     numero: Int,
     actividad: ActividadInfo,
     estrellas: Int, // -1 no jugada, 0-3 estrellas
+    porcentaje: Int, // -1 no jugada, 0-100
     onClick: () -> Unit
 ) {
     val jugada = estrellas >= 0
     val completada = estrellas > 0
     Card(
-        onClick = onClick,
+        onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(2.dp, if (completada) Leaf else LineColor),
         shape = RoundedCornerShape(16.dp),
@@ -125,16 +130,26 @@ private fun FilaActividad(
                     color = Ink
                 )
                 Spacer(Modifier.height(2.dp))
-                Text(
-                    text = when {
-                        !jugada -> "Pendiente"
-                        estrellas == 0 -> "Intentada · sin estrellas"
-                        else -> "Completada"
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (completada) LeafDark else InkSoft
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = when {
+                            !jugada -> "Pendiente"
+                            estrellas == 0 -> "Intentada"
+                            else -> "Completada"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (completada) LeafDark else InkSoft
+                    )
+                    if (jugada) {
+                        Text(
+                            text = " · $porcentaje%",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (porcentaje >= 100) LeafDark else Mango
+                        )
+                    }
+                }
             }
 
             // Estrellas ganadas

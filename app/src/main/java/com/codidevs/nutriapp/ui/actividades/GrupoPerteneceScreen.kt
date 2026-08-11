@@ -256,7 +256,7 @@ fun GrupoPerteneceScreen(
                 ) {
                     Text(
                         text = if (estado == "correcto")
-                            "✅ ¡Correcto! ${alimento.emoji} ${alimento.nombre} es de ${ronda.second.emoji} ${ronda.second.nombre}"
+                            "✅ ¡Correcto! +10 puntos"
                         else
                             "❌ Casi. ${alimento.emoji} ${alimento.nombre} es de ${ronda.second.emoji} ${ronda.second.nombre}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -272,7 +272,7 @@ fun GrupoPerteneceScreen(
             // Botón siguiente / terminar
             if (retro != null) {
                 Button(
-                    onClick = {
+                    onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                         if (indice + 1 >= rondas.size) {
                             onTerminada(puntaje)
                         } else {

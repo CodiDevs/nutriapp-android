@@ -106,6 +106,7 @@ fun MejorOpcionNivel2Screen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(enabled = !respondio) {
+                            com.codidevs.nutriapp.data.audio.SoundManager.click()
                             respuesta = esCorrecta
                             if (esCorrecta) puntaje += 10
                         }
@@ -162,7 +163,7 @@ fun MejorOpcionNivel2Screen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     if (indice + 1 >= preguntas.size) {
                         onTerminada(puntaje)
                     } else {

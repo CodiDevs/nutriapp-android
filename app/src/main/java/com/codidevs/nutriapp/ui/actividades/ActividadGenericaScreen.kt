@@ -13,21 +13,18 @@ fun ActividadGenericaScreen(
     tipo: String,
     datos: Any?,
     titulo: String,
-    totalPreguntas: Int,
+    puntosMaximos: Int,
     onBack: () -> Unit,
     onTerminada: (puntaje: Int, porcentaje: Int) -> Unit
 ) {
-    // Calcula el porcentaje de acierto según el puntaje y el total de preguntas.
-    // Los tipos de aprendizaje o sin examen ("descubre", "ruleta", "une", "semaforo",
-    // "reto") no tienen fallos reales: al completarlos se da el 100% (3 estrellas).
-    val sinFallos = tipo == "descubre" || tipo == "ruleta" || tipo == "une" ||
-        tipo == "semaforo" || tipo == "reto"
+    // Solo "descubre" es puramente exploratorio y siempre da 100%.
+    // Las demás (ruleta, semáforo, une, etc.) tienen puntuación y pueden fallar.
+    val sinFallos = tipo == "descubre"
     val terminar = { puntaje: Int ->
         val porcentaje = if (sinFallos) {
             100
         } else {
-            val maximo = totalPreguntas * 10
-            if (maximo > 0) (puntaje * 100 / maximo).coerceIn(0, 100) else 0
+            if (puntosMaximos > 0) (puntaje * 100 / puntosMaximos).coerceIn(0, 100) else 0
         }
         onTerminada(puntaje, porcentaje)
     }
