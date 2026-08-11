@@ -167,7 +167,7 @@ fun ImcScreen(
 
         // Botón de aventura
         Button(
-            onClick = onAventura,
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onAventura() },
             colors = ButtonDefaults.buttonColors(containerColor = Leaf),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().height(52.dp)

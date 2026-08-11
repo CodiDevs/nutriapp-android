@@ -58,7 +58,7 @@ private fun NavItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = { onTab(id) })
+            .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onTab(id) })
             .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

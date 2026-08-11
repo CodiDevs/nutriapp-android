@@ -48,7 +48,7 @@ fun ScreenHeader(
                 .shadow(4.dp, CircleShape)
                 .background(LeafLight, CircleShape)
                 .border(2.dp, Leaf, CircleShape)
-                .clickable(onClick = onBack),
+                .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onBack() }),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.size(24.dp)) {

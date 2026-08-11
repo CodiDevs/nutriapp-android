@@ -98,7 +98,7 @@ fun VerdaderoFalsoScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     respuesta = true
                     if (pregunta.esVerdadero) puntaje += 10
                 },
@@ -120,7 +120,7 @@ fun VerdaderoFalsoScreen(
                 }
             }
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     respuesta = false
                     if (!pregunta.esVerdadero) puntaje += 10
                 },
@@ -167,7 +167,7 @@ fun VerdaderoFalsoScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     if (indice + 1 >= preguntas.size) {
                         onTerminada(puntaje)
                     } else {

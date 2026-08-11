@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.data.audio.SoundManager
 import com.codidevs.nutriapp.ui.components.ScreenHeader
 import com.codidevs.nutriapp.ui.theme.Berry
 import com.codidevs.nutriapp.ui.theme.BerryLight
@@ -73,18 +74,25 @@ fun RuedaAlimentacionScreen(
     var puntaje by remember { mutableStateOf(0) }
     var seleccionada by remember { mutableStateOf<String?>(null) }
     var girando by remember { mutableStateOf(false) }
+    var procesandoSiguiente by remember { mutableStateOf(false) }
     val rotacion = remember { Animatable(0f) }
     val escala = remember { Animatable(1f) }
     // Partículas decorativas que se mueven mientras gira la ruleta
     var particulas by remember { mutableStateOf<List<ParticulaRuleta>>(emptyList()) }
 
-    // Generador de tonos reutilizable (crear uno por giro causaba lag)
-    val toneGenerator = remember {
-        try { ToneGenerator(AudioManager.STREAM_MUSIC, 60) } catch (_: Exception) { null }
-    }
-    DisposableEffect(Unit) {
-        onDispose {
-            try { toneGenerator?.release() } catch (_: Exception) { }
+    // Tics de la ruleta mientras gira
+    val sectorSize = 360f / alimentos.size
+    LaunchedEffect(girando) {
+        if (girando) {
+            var lastTickSector = -1
+            snapshotFlow { rotacion.value }
+                .collect { valor ->
+                    val currentSector = (valor / sectorSize).toInt()
+                    if (currentSector != lastTickSector) {
+                        lastTickSector = currentSector
+                        SoundManager.ruletaTick()
+                    }
+                }
         }
     }
 
@@ -97,8 +105,8 @@ fun RuedaAlimentacionScreen(
     // Animación: la ruleta crece mientras gira (zoom) y vuelve a su tamaño al detenerse
     LaunchedEffect(indice) {
         girando = true
-        // Sonido de inicio del giro (tic) — reutiliza el generador
-        try { toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 120) } catch (_: Exception) { }
+        // Sonido de inicio del giro (tic)
+        SoundManager.ruletaGiro()
         // Genera partículas de colores en el espacio vacío
         particulas = List(12) { ParticulaRuleta.aleatoria() }
 
@@ -123,8 +131,8 @@ fun RuedaAlimentacionScreen(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 400)
         )
-        // Sonido de detención (beep más largo) — reutiliza el generador
-        try { toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 200) } catch (_: Exception) { }
+        // Sonido de detención (beep más largo)
+        SoundManager.ruletaParo()
         // Las partículas se van al detenerse
         particulas = emptyList()
         girando = false
@@ -214,7 +222,7 @@ fun RuedaAlimentacionScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         fila.forEach { opcion ->
                             OutlinedButton(
-                                onClick = {
+                                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                                     seleccionada = opcion
                                     if (opcion == alimento.aporte) puntaje += 10
                                 },
@@ -264,14 +272,18 @@ fun RuedaAlimentacionScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
-                    if (indice + 1 >= alimentos.size) {
-                        onTerminada(puntaje)
-                    } else {
-                        indice++
-                        seleccionada = null
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
+                    if (!procesandoSiguiente) {
+                        if (indice + 1 >= alimentos.size) {
+                            procesandoSiguiente = true
+                            onTerminada(puntaje)
+                        } else {
+                            indice++
+                            seleccionada = null
+                        }
                     }
                 },
+                enabled = !procesandoSiguiente,
                 colors = ButtonDefaults.buttonColors(containerColor = Leaf),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)

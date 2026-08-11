@@ -258,7 +258,7 @@ fun UneImagenScreen(
                 Spacer(Modifier.height(14.dp))
 
                 Button(
-                    onClick = {
+                    onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                         if (indice + 1 >= rondas.size) {
                             onTerminada(puntaje)
                         } else {

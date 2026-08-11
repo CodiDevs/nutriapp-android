@@ -140,7 +140,7 @@ fun CompletaFraseScreen(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 opcionesBarajadas.forEach { opcion ->
                     OutlinedButton(
-                        onClick = {
+                        onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                             seleccionada = opcion
                             if (opcion == frase.respuesta) puntaje += 10
                         },
@@ -181,7 +181,7 @@ fun CompletaFraseScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     if (indice + 1 >= frases.size) {
                         onTerminada(puntaje)
                     } else {

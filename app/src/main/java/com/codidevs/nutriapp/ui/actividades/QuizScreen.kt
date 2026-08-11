@@ -109,6 +109,7 @@ fun QuizScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(enabled = !respondio) {
+                            com.codidevs.nutriapp.data.audio.SoundManager.click()
                             seleccionada = opcion
                             if (opcion == pregunta.correcta) puntaje += 10
                         }
@@ -150,7 +151,7 @@ fun QuizScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = {
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                     if (indice + 1 >= preguntas.size) {
                         onTerminada(puntaje)
                     } else {

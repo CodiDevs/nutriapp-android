@@ -72,6 +72,7 @@ fun RetoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            com.codidevs.nutriapp.data.audio.SoundManager.click()
                             if (hecha) {
                                 completadas = completadas - index
                                 puntaje -= accion.puntos
@@ -121,7 +122,7 @@ fun RetoScreen(
         Spacer(Modifier.height(12.dp))
 
         Button(
-            onClick = { onTerminada(puntaje) },
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onTerminada(puntaje) },
             colors = ButtonDefaults.buttonColors(containerColor = Leaf),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().height(52.dp)

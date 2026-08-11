@@ -61,7 +61,7 @@ fun ModulosScreen(
         ) {
             // Módulo de Nutrición (disponible)
             Card(
-                onClick = onNutricion,
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onNutricion() },
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = BorderStroke(2.dp, Leaf),
                 shape = RoundedCornerShape(20.dp),
@@ -111,7 +111,7 @@ fun ModulosScreen(
             // Módulo de Actividad física (bloqueado hasta completar Nutrición)
             val actividadBloqueada = !nutricionCompletado
             Card(
-                onClick = { if (!actividadBloqueada) onActividadFisica() },
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { if (!actividadBloqueada) onActividadFisica() },
                 enabled = !actividadBloqueada,
                 colors = CardDefaults.cardColors(
                     containerColor = if (actividadBloqueada) Locked.copy(alpha = 0.2f) else Color.White
