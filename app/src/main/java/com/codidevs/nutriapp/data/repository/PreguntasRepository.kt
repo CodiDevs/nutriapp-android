@@ -28,4 +28,40 @@ class PreguntasRepository(context: Context) {
         nivel(numero)?.actividades ?: emptyList()
 
     fun totalActividadesNivel(numero: Int): Int = actividadesDelNivel(numero).size
+
+    /**
+     * Calcula el puntaje máximo que se puede obtener en un nivel sumando
+     * el puntaje máximo de cada una de sus actividades.
+     */
+    fun puntosMaximosNivel(numero: Int): Int {
+        val actividades = actividadesDelNivel(numero)
+        return actividades.sumOf { puntosMaximosActividad(it) }
+    }
+
+    /**
+     * Define el puntaje máximo según el tipo de actividad.
+     * Basado en la lógica de las pantallas (normalmente 10 puntos por acierto).
+     */
+    fun puntosMaximosActividad(act: ActividadJson): Int {
+        return when (act.tipo) {
+            "descubre" -> 10
+            "grupos" -> 60 // 6 rondas fijas de arrastre
+            "reto" -> {
+                var sum = 0
+                for (i in 0 until act.datos.length()) {
+                    sum += act.datos.getJSONObject(i).optInt("puntos", 0)
+                }
+                sum
+            }
+            "semaforo" -> {
+                val obj = act.datosObjeto
+                if (obj != null) {
+                    (obj.getJSONArray("verde").length() +
+                        obj.getJSONArray("amarillo").length() +
+                        obj.getJSONArray("rojo").length()) * 10
+                } else 0
+            }
+            else -> act.datos.length() * 10
+        }
+    }
 }

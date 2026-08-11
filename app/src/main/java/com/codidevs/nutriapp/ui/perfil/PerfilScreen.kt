@@ -16,9 +16,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.codidevs.nutriapp.ui.theme.Berry
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
+import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
@@ -35,12 +37,24 @@ import com.codidevs.nutriapp.data.models.MedallaInfo
 fun PerfilScreen(
     nombre: String,
     nivel: Int,
+    puntos: Int = 0,
     medallas: List<MedallaInfo>,
     medallaPerfil: String, // id de la medalla puesta en el perfil ("" = ninguna)
     onPonerMedalla: (String) -> Unit,
     onVerRecompensas: () -> Unit,
     onCrearRegistro: () -> Unit
 ) {
+    // Evita clics repetidos
+    var yaHaciendoClick by remember { mutableStateOf(false) }
+
+    // Seguridad: desbloquea siempre tras un breve tiempo para evitar quedar bloqueado
+    LaunchedEffect(yaHaciendoClick) {
+        if (yaHaciendoClick) {
+            delay(1000)
+            yaHaciendoClick = false
+        }
+    }
+
     // La medalla que se muestra en la cabecera: la elegida, o la más reciente desbloqueada
     val medallaMostrada = medallas.firstOrNull { it.id == medallaPerfil }
         ?: medallas.filter { it.desbloqueada }.maxByOrNull { it.orden }
@@ -115,6 +129,68 @@ fun PerfilScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // Tarjeta de Puntos Totales con barra de progreso
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Sky.copy(alpha = 0.12f)),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(2.dp, Sky.copy(alpha = 0.4f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "✨", fontSize = 32.sp)
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Puntos Totales",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Sky
+                        )
+                        Text(
+                            text = "$puntos / 1490 puntos",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Ink
+                        )
+                    }
+                }
+                
+                Spacer(Modifier.height(16.dp))
+                
+                // Barra de progreso hacia la meta final
+                val progreso = (puntos.toFloat() / 1490f).coerceIn(0f, 1f)
+                LinearProgressIndicator(
+                    progress = { progreso },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp),
+                    color = Leaf,
+                    trackColor = Sky.copy(alpha = 0.2f),
+                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+                
+                Spacer(Modifier.height(8.dp))
+                
+                Text(
+                    text = "${(progreso * 100).toInt()}% de la meta NutriHero",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = InkSoft
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
         // Mis medallas (tarjetas estilo minijuegos, más grandes)
         Text(
             text = "Mis medallas",
@@ -173,7 +249,7 @@ fun PerfilScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Button(
-                        onClick = {
+                        onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
                             onPonerMedalla(id)
                             medallaSeleccionada = null
                         },
@@ -195,7 +271,12 @@ fun PerfilScreen(
 
         // Ver recompensas
         Button(
-            onClick = onVerRecompensas,
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
+                if (!yaHaciendoClick) {
+                    yaHaciendoClick = true
+                    onVerRecompensas()
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color.White),
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(2.dp, LineColor),
@@ -212,7 +293,11 @@ fun PerfilScreen(
 
         // Crear otro registro
         OutlinedButton(
-            onClick = { mostrarDialogoRegistro = true },
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
+                if (!yaHaciendoClick) {
+                    mostrarDialogoRegistro = true
+                }
+            },
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Berry),
             border = BorderStroke(2.dp, Berry),
             shape = RoundedCornerShape(16.dp),
@@ -270,7 +355,7 @@ private fun MedalCell(
         shadowElevation = 3.dp,
         modifier = modifier
             .height(110.dp)
-            .clickable(onClick = onClick)
+            .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() })
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),

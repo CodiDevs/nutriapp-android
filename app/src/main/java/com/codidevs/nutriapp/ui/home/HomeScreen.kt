@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.codidevs.nutriapp.ui.components.NotaMensaje
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
@@ -34,6 +35,27 @@ fun HomeScreen(
     onRecompensas: () -> Unit,
     onPerfil: () -> Unit
 ) {
+    // Evita clics repetidos que bugean la navegación
+    var yaHaciendoClick by remember { mutableStateOf(false) }
+
+    // Saludo dinámico según la hora
+    val saludo = remember {
+        val hora = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        when (hora) {
+            in 6..11 -> "¡Buenos días!"
+            in 12..18 -> "¡Buenas tardes!"
+            else -> "¡Buenas noches!"
+        }
+    }
+
+    // Seguridad: desbloquea siempre tras un breve tiempo para evitar quedar bloqueado
+    LaunchedEffect(yaHaciendoClick) {
+        if (yaHaciendoClick) {
+            delay(1000)
+            yaHaciendoClick = false
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,9 +64,9 @@ fun HomeScreen(
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // Saludo y nivel/módulo reales
+        // Saludo dinámico y nivel/módulo reales
         Text(
-            text = "Buenos días, $nombre",
+            text = "$saludo, $nombre",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = Ink
@@ -86,7 +108,12 @@ fun HomeScreen(
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = onSendero,
+                    onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
+                        if (!yaHaciendoClick) {
+                            yaHaciendoClick = true
+                            onSendero()
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Mango),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
@@ -106,13 +133,23 @@ fun HomeScreen(
             AccessCard(
                 emoji = "🎁",
                 texto = "Recompensas",
-                onClick = onRecompensas,
+                onClick = {
+                    if (!yaHaciendoClick) {
+                        yaHaciendoClick = true
+                        onRecompensas()
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
             AccessCard(
                 emoji = "👤",
                 texto = "Mi perfil",
-                onClick = onPerfil,
+                onClick = {
+                    if (!yaHaciendoClick) {
+                        yaHaciendoClick = true
+                        onPerfil()
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -146,7 +183,7 @@ private fun AccessCard(
         shadowElevation = 3.dp,
         modifier = modifier
             .height(120.dp)
-            .clickable(onClick = onClick)
+            .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() })
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),

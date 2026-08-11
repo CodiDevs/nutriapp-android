@@ -53,6 +53,8 @@ object CatalogoMedallas {
                 "especial" -> especialDesbloqueada
                 else -> false
             }
+            // Ahora todas nacen con el candado quitado si el módulo está "desbloqueado",
+            // pero la lógica de canjeada (gratis vs pagada) se maneja en el Repository.
             m.copy(desbloqueada = desbloqueada)
         }
     }

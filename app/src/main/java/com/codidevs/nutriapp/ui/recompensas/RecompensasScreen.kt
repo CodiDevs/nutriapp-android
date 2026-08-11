@@ -39,11 +39,22 @@ fun RecompensasScreen(
     onCanjear: (MedallaInfo) -> Unit,
     onCerrar: () -> Unit
 ) {
+    // Evita canjes duplicados por clics rápidos
+    var procesandoCanje by remember { mutableStateOf(false) }
+    var cerrando by remember { mutableStateOf(false) }
+
     // Panel que sube desde abajo
     ModalBottomSheet(
-        onDismissRequest = onCerrar,
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        onDismissRequest = {
+            if (!cerrando) {
+                cerrando = true
+                onCerrar()
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f), // Ligeramente transparente
+        scrimColor = Color.Black.copy(alpha = 0.4f), // Oscurece el fondo para que resalte
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        tonalElevation = 8.dp
     ) {
         Column(
             modifier = Modifier
@@ -62,12 +73,18 @@ fun RecompensasScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            Text(
-                text = "🏆 Recompensas",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = Ink
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "🏆 Recompensas",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Ink
+                )
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { if (!cerrando) { cerrando = true; onCerrar() } }) {
+                    Text("✕", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = InkSoft)
+                }
+            }
 
             Spacer(Modifier.height(4.dp))
 
@@ -100,13 +117,21 @@ fun RecompensasScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Medallas
             medallas.forEach { medalla ->
+                val esAutomatica = (medalla.id == "frutas" || medalla.id == "deportista")
+                val yaLaTiene = medalla.id in canjeadas
+
                 RecompensaItem(
                     medalla = medalla,
                     monedas = monedas,
-                    canjeada = medalla.id in canjeadas,
-                    onCanjear = { onCanjear(medalla) }
+                    canjeada = yaLaTiene,
+                    habilitado = !procesandoCanje,
+                    onCanjear = {
+                        if (!esAutomatica || !yaLaTiene) {
+                            procesandoCanje = true
+                            onCanjear(medalla)
+                        }
+                    }
                 )
                 Spacer(Modifier.height(10.dp))
             }
@@ -121,10 +146,12 @@ private fun RecompensaItem(
     medalla: MedallaInfo,
     monedas: Int,
     canjeada: Boolean,
+    habilitado: Boolean,
     onCanjear: () -> Unit
 ) {
-    val costo = if (medalla.especial) 500 else 200
-    val puede = monedas >= costo && medalla.desbloqueada
+    // Ajuste de precios: Normales 50, Especial 150
+    val costo = if (medalla.especial) 150 else 50
+    val puede = monedas >= costo && medalla.desbloqueada && habilitado
 
     Surface(
         color = when {
@@ -184,10 +211,10 @@ private fun RecompensaItem(
                     Surface(
                         color = if (puede) Mango else LineColor.copy(alpha = 0.5f),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.clickable(enabled = puede, onClick = onCanjear)
+                        modifier = Modifier.clickable(enabled = puede, onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onCanjear() })
                     ) {
                         Text(
-                            text = "🪙 $costo",
+                            text = if (medalla.id == "frutas" || medalla.id == "deportista") "¡GRATIS!" else "🪙 $costo",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (puede) Color.White else InkSoft,

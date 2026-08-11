@@ -14,22 +14,27 @@ class ProgresoRepository(context: Context) {
         context.getSharedPreferences("progreso_nutriapp", Context.MODE_PRIVATE)
 
     /**
-     * Registra el resultado de una actividad con su desempeño (porcentaje 0-100).
-     * Guarda el MEJOR porcentaje de la actividad. Los totales (estrellas y monedas)
-     * se calculan a demanda sumando el mejor registro de cada actividad — nunca se
-     * acumulan intentos repetidos, solo cuenta el mejor desempeño.
+     * Registra el resultado de una actividad con su desempeño (porcentaje 0-100) y puntaje.
+     * Guarda el MEJOR porcentaje y el MEJOR puntaje de la actividad.
      */
     fun registrarResultadoActividad(
         nivel: Int,
         actividadId: Int,
         porcentaje: Int,
-        monedasNivel: Int
+        puntaje: Int
     ): Int {
         val clavePorcentaje = "porcentaje_nivel_${nivel}_actividad_${actividadId}"
         val mejorAnterior = prefs.getInt(clavePorcentaje, -1)
         if (porcentaje > mejorAnterior) {
             prefs.edit().putInt(clavePorcentaje, porcentaje).apply()
         }
+        
+        val clavePuntaje = "puntaje_nivel_${nivel}_actividad_${actividadId}"
+        val mejorPuntajeAnterior = prefs.getInt(clavePuntaje, -1)
+        if (puntaje > mejorPuntajeAnterior) {
+            prefs.edit().putInt(clavePuntaje, puntaje).apply()
+        }
+        
         // Devuelve las estrellas del mejor porcentaje actual (0-3)
         return estrellasPorPorcentaje(maxOf(mejorAnterior, porcentaje))
     }
@@ -42,9 +47,9 @@ class ProgresoRepository(context: Context) {
         else -> 0
     }
 
-    /** Monedas de un minijuego según sus estrellas de desempeño (1→5, 2→10, 3→15). */
+    /** Monedas de un minijuego según sus estrellas de desempeño (1→5, 2→10, 3→20). */
     fun monedasMinijuego(estrellas: Int): Int = when {
-        estrellas >= 3 -> 15
+        estrellas >= 3 -> 20
         estrellas >= 2 -> 10
         estrellas >= 1 -> 5
         else -> 0
@@ -56,34 +61,60 @@ class ProgresoRepository(context: Context) {
         return if (pct >= 0) estrellasPorPorcentaje(pct) else -1
     }
 
+    /** Porcentaje del mejor desempeño de una actividad (0-100, -1 si nunca se jugó). */
+    fun porcentajeActividad(nivel: Int, actividadId: Int): Int =
+        prefs.getInt("porcentaje_nivel_${nivel}_actividad_${actividadId}", -1)
+
+    /** Indica si un módulo fue completado perfectamente (100% en todos sus niveles). */
+    fun moduloPerfecto(rangoNiveles: IntRange): Boolean {
+        return rangoNiveles.all { nivelCompletoAl100(it) }
+    }
+
     /**
      * Estrellas ASIGNADAS a una actividad según su nivel y posición (no según desempeño):
-     * cada nivel reparte 3 estrellas entre sus actividades (la primera recibe más).
-     * Devuelve el valor asignado solo si la actividad fue completada (1+ estrellas reales),
+     * cada nivel reparte 3 estrellas entre sus actividades.
+     * Devuelve el valor asignado (1 o 2) solo si la actividad fue completada (1+ estrellas reales),
      * o 0 si no está completada.
      */
     fun estrellasAsignadasActividad(nivel: Int, actividadId: Int, totalActividades: Int): Int {
         val completada = estrellasActividad(nivel, actividadId) > 0
         if (!completada) return 0
         val asignadas = estrellasPorActividad(nivel, totalActividades)
-        return asignadas[actividadId] ?: 1
+        // Por seguridad, si el ID no está en el mapa (raro), devolvemos 0 para no inflar el total
+        return asignadas[actividadId] ?: 0
     }
 
-    /** Reparto de estrellas por actividad (3 en total por nivel). */
+    /** Reparto de estrellas por actividad (siempre suma exactamente 3 por nivel). */
     fun estrellasPorActividad(nivel: Int, totalActividades: Int): Map<Int, Int> {
         if (totalActividades <= 0) return emptyMap()
-        // Niveles con 2 actividades: 2 y 1. Con 3: 1, 1, 1. Con 1: 3.
-        val valores = when (totalActividades) {
-            1 -> listOf(3)
-            2 -> listOf(2, 1)
-            else -> List(totalActividades) { 1 }
+        val res = mutableMapOf<Int, Int>()
+        when (totalActividades) {
+            1 -> res[1] = 3
+            2 -> { res[1] = 2; res[2] = 1 }
+            3 -> { res[1] = 1; res[2] = 1; res[3] = 1 }
+            else -> {
+                // Para más de 3 actividades, repartimos 1 estrella en la primera, 
+                // una en la mitad y una en la última.
+                val mitad = (totalActividades / 2) + 1
+                for (i in 1..totalActividades) {
+                    res[i] = if (i == 1 || i == mitad || i == totalActividades) 1 else 0
+                }
+            }
         }
-        return (1..totalActividades).associateWith { valores[it - 1] }
+        return res
     }
 
     /** Guarda las estrellas logradas en un minijuego (0-3). */
     fun setEstrellasMinijuego(id: String, estrellas: Int) {
         prefs.edit().putInt("minijuego_estrellas_$id", estrellas).apply()
+    }
+
+    /** Guarda el puntaje máximo logrado en un minijuego. */
+    fun setPuntajeMinijuego(id: String, puntaje: Int) {
+        val actual = prefs.getInt("minijuego_puntaje_$id", 0)
+        if (puntaje > actual) {
+            prefs.edit().putInt("minijuego_puntaje_$id", puntaje).apply()
+        }
     }
 
     /** Estrellas logradas en un minijuego (0-3, -1 si nunca se jugó). */
@@ -115,8 +146,30 @@ class ProgresoRepository(context: Context) {
     }
 
     /** Indica si una recompensa fue canjeada. */
-    fun recompensaCanjeada(id: String): Boolean =
-        prefs.getBoolean("canjeada_$id", false)
+    fun recompensaCanjeada(id: String): Boolean {
+        // Las medallas de "frutas" y "deportista" son automáticas:
+        // se consideran "canjeadas" gratis si los módulos están al 100%.
+        if (id == "frutas") {
+            val completo = (1..3).all { nivelCompletoAl100(it) }
+            if (completo) return true
+        }
+        if (id == "deportista") {
+            val completo = (4..7).all { nivelCompletoAl100(it) }
+            if (completo) return true
+        }
+        return prefs.getBoolean("canjeada_$id", false)
+    }
+
+    /** Indica si un nivel fue completado perfectamente (todas las actividades al 100%). */
+    private fun nivelCompletoAl100(nivel: Int): Boolean {
+        val prefsAll = prefs.all
+        // Filtramos las claves de porcentaje para ese nivel
+        val clavesNivel = prefsAll.keys.filter { it.startsWith("porcentaje_nivel_${nivel}_actividad_") }
+        if (clavesNivel.isEmpty()) return false
+        
+        // Verificamos que todos los porcentajes guardados sean 100
+        return clavesNivel.all { (prefsAll[it] as? Int ?: 0) >= 100 }
+    }
 
     /** Guarda los datos del usuario registrado. */
     fun guardarUsuario(nombre: String, edad: Int, peso: Double, estatura: Double) {
@@ -135,6 +188,24 @@ class ProgresoRepository(context: Context) {
     /** Borra TODO: usuario y progreso (para crear un registro nuevo). */
     fun borrarTodo() {
         prefs.edit().clear().apply()
+    }
+
+    /**
+     * Borra solo el progreso de las actividades (porcentajes, puntajes, estrellas, monedas y medallas),
+     * pero MANTIENE los datos del usuario (nombre, edad, etc.) y la racha de días.
+     */
+    fun borrarSoloProgresoActividades() {
+        val keys = prefs.all.keys
+        val editor = prefs.edit()
+        keys.forEach { key ->
+            val esDatoUsuario = key.startsWith("usuario_") || 
+                               key == "ultimo_dia" || 
+                               key == "racha_dias"
+            if (!esDatoUsuario) {
+                editor.remove(key)
+            }
+        }
+        editor.apply()
     }
 
     /** Registra un día activo y devuelve la racha actual (días consecutivos). */
@@ -160,26 +231,31 @@ class ProgresoRepository(context: Context) {
     val rachaDias: Int get() = prefs.getInt("racha_dias", 0)
 
     /** Número de actividades completadas de un nivel (con al menos 1 estrella). */
-    fun actividadesCompletadas(nivel: Int): Int =
-        (1..10).count { prefs.getInt("porcentaje_nivel_${nivel}_actividad_$it", -1) >= 40 }
+    fun actividadesCompletadas(nivel: Int, totalActividades: Int): Int =
+        (1..totalActividades).count { prefs.getInt("porcentaje_nivel_${nivel}_actividad_$it", -1) >= 40 }
 
     /** El nivel está completo cuando se completan todas sus actividades. */
-    fun nivelCompleto(nivel: Int, totalActividades: Int): Boolean =
-        actividadesCompletadas(nivel) >= totalActividades
+    fun nivelCompleto(nivel: Int, totalActividades: Int): Boolean {
+        if (totalActividades <= 0) return false
+        val completadas = (1..totalActividades).count { id ->
+            prefs.getInt("porcentaje_nivel_${nivel}_actividad_$id", -1) >= 40
+        }
+        return completadas >= totalActividades
+    }
 
     /**
-     * Estrellas totales: suma de las estrellas del mejor desempeño de cada actividad
-     * y minijuego (no acumula intentos repetidos).
+     * Estrellas totales: suma de las estrellas ASIGNADAS (proporcionales al nivel)
+     * de cada actividad completada y las estrellas de los minijuegos.
+     * Así, cada nivel del sendero suma exactamente 3 estrellas al total.
      */
     fun estrellasTotales(actividadesPorNivel: Map<Int, Int>): Int {
         var total = 0
         actividadesPorNivel.forEach { (nivel, numAct) ->
             for (id in 1..numAct) {
-                val pct = prefs.getInt("porcentaje_nivel_${nivel}_actividad_$id", -1)
-                if (pct > 0) total += estrellasPorPorcentaje(pct)
+                total += estrellasAsignadasActividad(nivel, id, numAct)
             }
         }
-        // Minijuegos libres (su mejor registro)
+        // Minijuegos libres (su mejor registro 0-3)
         listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria").forEach { id ->
             val est = prefs.getInt("minijuego_estrellas_$id", -1)
             if (est > 0) total += est
@@ -189,15 +265,15 @@ class ProgresoRepository(context: Context) {
 
     /**
      * Monedas totales: suma de las monedas ganadas con el MEJOR desempeño de cada
-     * actividad y minijuego (no acumula intentos), menos lo gastado en canjes.
+     * actividad (fijo 20 por actividad de sendero) y minijuego, menos lo gastado.
      */
-    fun monedasTotales(monedasPorNivel: Map<Int, Int>, actividadesPorNivel: Map<Int, Int>): Int {
+    fun monedasTotales(actividadesPorNivel: Map<Int, Int>): Int {
         var total = 0
-        monedasPorNivel.forEach { (nivel, monedasNivel) ->
-            val numAct = actividadesPorNivel[nivel] ?: 0
+        actividadesPorNivel.forEach { (nivel, numAct) ->
             for (id in 1..numAct) {
                 val pct = prefs.getInt("porcentaje_nivel_${nivel}_actividad_$id", -1)
-                if (pct > 0) total += (monedasNivel * pct / 100)
+                // Se dan 20 monedas fijas por completar la actividad al 100%
+                if (pct > 0) total += (20 * pct / 100)
             }
         }
         // Minijuegos libres: monedas según estrellas de desempeño (1→5, 2→10, 3→15)
@@ -207,5 +283,24 @@ class ProgresoRepository(context: Context) {
         }
         // Descuenta lo gastado en recompensas canjeadas
         return (total - prefs.getInt("monedas_gastadas", 0)).coerceAtLeast(0)
+    }
+
+    /**
+     * Puntos totales: suma de los mejores puntajes obtenidos en cada actividad
+     * y minijuego. Son independientes de las monedas.
+     */
+    fun puntosTotales(actividadesPorNivel: Map<Int, Int>): Int {
+        var total = 0
+        actividadesPorNivel.forEach { (nivel, numAct) ->
+            for (id in 1..numAct) {
+                val p = prefs.getInt("puntaje_nivel_${nivel}_actividad_$id", 0)
+                total += p
+            }
+        }
+        // Puntos de minijuegos libres
+        listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria").forEach { id ->
+            total += prefs.getInt("minijuego_puntaje_$id", 0)
+        }
+        return total
     }
 }
