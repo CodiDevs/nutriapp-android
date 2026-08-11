@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,15 +32,15 @@ fun RegistroScreen(
     onBack: () -> Unit,
     onContinuar: (nombre: String, edad: String, peso: String, estatura: String) -> Unit
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var edad by remember { mutableStateOf("") }
-    var peso by remember { mutableStateOf("") }
-    var estatura by remember { mutableStateOf("") }
+    var nombre by rememberSaveable { mutableStateOf("") }
+    var edad by rememberSaveable { mutableStateOf("") }
+    var peso by rememberSaveable { mutableStateOf("") }
+    var estatura by rememberSaveable { mutableStateOf("") }
 
-    var errorNombre by remember { mutableStateOf<String?>(null) }
-    var errorEdad by remember { mutableStateOf<String?>(null) }
-    var errorPeso by remember { mutableStateOf<String?>(null) }
-    var errorEstatura by remember { mutableStateOf<String?>(null) }
+    var errorNombre by rememberSaveable { mutableStateOf<String?>(null) }
+    var errorEdad by rememberSaveable { mutableStateOf<String?>(null) }
+    var errorPeso by rememberSaveable { mutableStateOf<String?>(null) }
+    var errorEstatura by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun validarYContinuar() {
         errorNombre = if (nombre.isBlank()) "Escribe tu nombre" else null
@@ -176,7 +177,7 @@ fun RegistroScreen(
         Spacer(Modifier.height(28.dp))
 
         Button(
-            onClick = { validarYContinuar() },
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { validarYContinuar() },
             colors = ButtonDefaults.buttonColors(containerColor = Leaf),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().height(52.dp)

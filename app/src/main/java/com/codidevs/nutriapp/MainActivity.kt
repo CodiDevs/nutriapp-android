@@ -4,19 +4,19 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import com.codidevs.nutriapp.data.audio.SoundManager
 import com.codidevs.nutriapp.data.models.CatalogoMedallas
 import com.codidevs.nutriapp.data.models.GruposAlimenticios
 import com.codidevs.nutriapp.data.repository.ActividadMapper
@@ -50,6 +50,8 @@ import com.codidevs.nutriapp.ui.theme.NutriAppTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Inicializa el gestor de sonidos (beeps) para clicks y ruleta
+        SoundManager.init()
         // Barras del sistema (estado y navegación) del color crema de la app,
         // con íconos oscuros para que la hora y los íconos se vean bien.
         enableEdgeToEdge(
@@ -62,6 +64,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val progreso = remember { ProgresoRepository(applicationContext) }
                     val preguntas = remember { PreguntasRepository(applicationContext) }
+                    
                     // Registra el día activo para la racha (solo una vez por apertura)
                     remember { progreso.registrarDiaActivo() }
                     // Si ya hay un usuario registrado, arranca directo en el Home
@@ -74,9 +77,6 @@ class MainActivity : ComponentActivity() {
                     // Mapas de niveles para calcular los totales (actividades y monedas por nivel)
                     val actividadesPorNivel = remember {
                         (1..7).associateWith { preguntas.totalActividadesNivel(it) }
-                    }
-                    val monedasPorNivel = remember {
-                        (1..7).associateWith { preguntas.nivel(it)?.monedas ?: 20 }
                     }
 
                     NavHost(
@@ -163,8 +163,13 @@ class MainActivity : ComponentActivity() {
                         // pantalla: tocar la barra solo cambia el contenido, sin navegación,
                         // así no se acumulan copias ni se repite la animación de transición.
                         composable(NutriRoutes.HOME) {
+                            // Si el usuario presiona "Atrás" y no está en el Inicio, lo devolvemos al Inicio
+                            BackHandler(enabled = tabActiva != "home") {
+                                tabActiva = "home"
+                            }
+
                             val totalMonedas = remember(versionProgreso) {
-                                progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
+                                progreso.monedasTotales(actividadesPorNivel)
                             }
                             val totalEstrellas = remember(versionProgreso) {
                                 progreso.estrellasTotales(actividadesPorNivel)
@@ -245,6 +250,9 @@ class MainActivity : ComponentActivity() {
                                         PerfilScreen(
                                             nombre = nombreUsuario,
                                             nivel = nivelActualGlobal(progreso, preguntas),
+                                            puntos = remember(versionProgreso) {
+                                                progreso.puntosTotales(actividadesPorNivel)
+                                            },
                                             medallas = remember(versionProgreso) {
                                                 CatalogoMedallas.conProgreso(
                                                     nutricionCompleto,
@@ -298,8 +306,9 @@ class MainActivity : ComponentActivity() {
                                     titulo = n.titulo,
                                     descripcion = n.descripcion,
                                     actividades = n.actividades.size,
-                                    // Total de monedas del nivel: monedas por actividad × número de actividades
-                                    monedas = "+${n.monedas * n.actividades.size}"
+                                    // Total de monedas del nivel: 20 por actividad
+                                    monedas = "+${20 * n.actividades.size}",
+                                    puntosMaximos = preguntas.puntosMaximosNivel(nivelId)
                                 )
                             } ?: nivel
                             NivelDetalleScreen(
@@ -334,10 +343,17 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
+                            // Porcentajes de cada actividad
+                            val porcentajesActividades = remember(nivelId, versionProgreso) {
+                                actividadesNivel.associate { act ->
+                                    act.id to progreso.porcentajeActividad(nivelId, act.id)
+                                }
+                            }
                             ActividadesScreen(
                                 nivelNumero = nivelId,
                                 actividades = actividadesNivel,
                                 estrellas = estrellasActividades,
+                                porcentajes = porcentajesActividades,
                                 onBack = { navController.popBackStack() },
                                 onActividadClick = { actividad ->
                                     // Navega a la ruta genérica con nivel y actividad
@@ -410,28 +426,27 @@ class MainActivity : ComponentActivity() {
                                 tipo = actJson?.tipo ?: "",
                                 datos = datos,
                                 titulo = actJson?.nombre ?: "Actividad",
-                                totalPreguntas = when (actJson?.tipo) {
-                                    "reto" -> 10 // reto tiene 10 acciones
-                                    else -> (datos as? List<*>)?.size ?: 0
-                                },
+                                puntosMaximos = actJson?.let { preguntas.puntosMaximosActividad(it) } ?: 0,
                                 onBack = { navController.popBackStack() },
                                 onTerminada = { puntaje, porcentaje ->
-                                    val monedasNivel = preguntas.nivel(nivelId)?.monedas ?: 20
-                                    val totalMonedasAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    val estrellasGanadas = progreso.registrarResultadoActividad(
-                                        nivelId, actividadId, porcentaje, monedasNivel
-                                    )
-                                    val totalMonedasDespues = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    // El premio muestra SOLO lo que realmente se añadió al total (la diferencia)
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val actsJson = preguntas.actividadesDelNivel(nivelId)
+                                    val estrellasAntes = progreso.estrellasAsignadasActividad(nivelId, actividadId, actsJson.size)
+                                    
+                                    progreso.registrarResultadoActividad(nivelId, actividadId, porcentaje, puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasAsignadasActividad(nivelId, actividadId, actsJson.size)
+
                                     val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
-                                    // Estrellas asignadas de la actividad (según nivel y posición)
-                                    val totalAct = actividadesPorNivel[nivelId] ?: 1
-                                    val estrellasPremio = progreso.estrellasAsignadasActividad(
-                                        nivelId, actividadId, totalAct
-                                    )
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - estrellasAntes).coerceAtLeast(0)
+                                    
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasPremio/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo("${NutriRoutes.ACTIVIDAD}/$nivelId/$actividadId") { inclusive = true }
                                     }
@@ -439,7 +454,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         // ---- Minijuegos libres (pestaña Juegos) ----
-                        // Recompensan solo si se supera el mejor desempeño anterior (anti-farmeo).
+                        // Recompensas solo si se supera el mejor desempeño anterior (anti-farmeo).
                         // El premio muestra lo que realmente se sumó al total (la diferencia).
                         composable(NutriRoutes.JUEGO_ARRASTRAR) {
                             GrupoPerteneceScreen(
@@ -448,16 +463,27 @@ class MainActivity : ComponentActivity() {
                                 onTerminada = { puntaje ->
                                     val porcentaje = (puntaje * 100 / 60).coerceIn(0, 100) // 6 rondas x 10
                                     val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
-                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    if (estrellas > progreso.estrellasMinijuego("arrastrar")) {
+                                    
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasAntes = progreso.estrellasMinijuego("arrastrar")
+
+                                    if (estrellas > estrellasAntes) {
                                         progreso.setEstrellasMinijuego("arrastrar", estrellas)
                                     }
-                                    val monedasGanadas = (progreso.monedasTotales(
-                                        monedasPorNivel, actividadesPorNivel
-                                    ) - totalAntes).coerceAtLeast(0)
+                                    progreso.setPuntajeMinijuego("arrastrar", puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasMinijuego("arrastrar")
+
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - maxOf(0, estrellasAntes)).coerceAtLeast(0)
+
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo(NutriRoutes.JUEGO_ARRASTRAR) { inclusive = true }
                                     }
@@ -481,16 +507,27 @@ class MainActivity : ComponentActivity() {
                                     val maximo = preguntasVF.size * 10
                                     val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
                                     val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
-                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    if (estrellas > progreso.estrellasMinijuego("vf")) {
+                                    
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasAntes = progreso.estrellasMinijuego("vf")
+
+                                    if (estrellas > estrellasAntes) {
                                         progreso.setEstrellasMinijuego("vf", estrellas)
                                     }
-                                    val monedasGanadas = (progreso.monedasTotales(
-                                        monedasPorNivel, actividadesPorNivel
-                                    ) - totalAntes).coerceAtLeast(0)
+                                    progreso.setPuntajeMinijuego("vf", puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasMinijuego("vf")
+
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - maxOf(0, estrellasAntes)).coerceAtLeast(0)
+
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo(NutriRoutes.JUEGO_VF) { inclusive = true }
                                     }
@@ -523,16 +560,27 @@ class MainActivity : ComponentActivity() {
                                     val maximo = frases.size * 10
                                     val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
                                     val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
-                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    if (estrellas > progreso.estrellasMinijuego("completa")) {
+                                    
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasAntes = progreso.estrellasMinijuego("completa")
+
+                                    if (estrellas > estrellasAntes) {
                                         progreso.setEstrellasMinijuego("completa", estrellas)
                                     }
-                                    val monedasGanadas = (progreso.monedasTotales(
-                                        monedasPorNivel, actividadesPorNivel
-                                    ) - totalAntes).coerceAtLeast(0)
+                                    progreso.setPuntajeMinijuego("completa", puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasMinijuego("completa")
+
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - maxOf(0, estrellasAntes)).coerceAtLeast(0)
+
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo(NutriRoutes.JUEGO_COMPLETA) { inclusive = true }
                                     }
@@ -559,16 +607,27 @@ class MainActivity : ComponentActivity() {
                                     val maximo = preguntasMejor.size * 10
                                     val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
                                     val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
-                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    if (estrellas > progreso.estrellasMinijuego("mejor")) {
+                                    
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasAntes = progreso.estrellasMinijuego("mejor")
+
+                                    if (estrellas > estrellasAntes) {
                                         progreso.setEstrellasMinijuego("mejor", estrellas)
                                     }
-                                    val monedasGanadas = (progreso.monedasTotales(
-                                        monedasPorNivel, actividadesPorNivel
-                                    ) - totalAntes).coerceAtLeast(0)
+                                    progreso.setPuntajeMinijuego("mejor", puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasMinijuego("mejor")
+
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - maxOf(0, estrellasAntes)).coerceAtLeast(0)
+
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo(NutriRoutes.JUEGO_MEJOR) { inclusive = true }
                                     }
@@ -588,16 +647,27 @@ class MainActivity : ComponentActivity() {
                                     val maximo = alimentosRuleta.size * 10
                                     val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
                                     val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
-                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    if (estrellas > progreso.estrellasMinijuego("ruleta")) {
+                                    
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasAntes = progreso.estrellasMinijuego("ruleta")
+
+                                    if (estrellas > estrellasAntes) {
                                         progreso.setEstrellasMinijuego("ruleta", estrellas)
                                     }
-                                    val monedasGanadas = (progreso.monedasTotales(
-                                        monedasPorNivel, actividadesPorNivel
-                                    ) - totalAntes).coerceAtLeast(0)
+                                    progreso.setPuntajeMinijuego("ruleta", puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasMinijuego("ruleta")
+
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - maxOf(0, estrellasAntes)).coerceAtLeast(0)
+
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo(NutriRoutes.JUEGO_RULETA) { inclusive = true }
                                     }
@@ -625,16 +695,27 @@ class MainActivity : ComponentActivity() {
                                     val maximo = pares.size * 10
                                     val porcentaje = if (maximo > 0) (puntaje * 100 / maximo) else 0
                                     val estrellas = progreso.estrellasPorPorcentaje(porcentaje)
-                                    val totalAntes = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel)
-                                    if (estrellas > progreso.estrellasMinijuego("memoria")) {
+                                    
+                                    val totalMonedasAntes = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosAntes = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasAntes = progreso.estrellasMinijuego("memoria")
+
+                                    if (estrellas > estrellasAntes) {
                                         progreso.setEstrellasMinijuego("memoria", estrellas)
                                     }
-                                    val monedasGanadas = (progreso.monedasTotales(
-                                        monedasPorNivel, actividadesPorNivel
-                                    ) - totalAntes).coerceAtLeast(0)
+                                    progreso.setPuntajeMinijuego("memoria", puntaje)
+                                    
+                                    val totalMonedasDespues = progreso.monedasTotales(actividadesPorNivel)
+                                    val totalPuntosDespues = progreso.puntosTotales(actividadesPorNivel)
+                                    val estrellasDespues = progreso.estrellasMinijuego("memoria")
+
+                                    val monedasGanadas = (totalMonedasDespues - totalMonedasAntes).coerceAtLeast(0)
+                                    val puntosGanados = (totalPuntosDespues - totalPuntosAntes).coerceAtLeast(0)
+                                    val estrellasGanadas = (estrellasDespues - maxOf(0, estrellasAntes)).coerceAtLeast(0)
+
                                     versionProgreso++
                                     navController.navigate(
-                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellas/$monedasGanadas"
+                                        "${NutriRoutes.PREMIO}/$porcentaje/$estrellasGanadas/$monedasGanadas/$puntosGanados"
                                     ) {
                                         popUpTo(NutriRoutes.JUEGO_MEMORIA) { inclusive = true }
                                     }
@@ -642,17 +723,21 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(
-                            "${NutriRoutes.PREMIO}/{porcentaje}/{estrellas}/{monedas}"
+                            "${NutriRoutes.PREMIO}/{porcentaje}/{estrellas}/{monedas}/{puntos}"
                         ) { backStackEntry ->
                             val args = backStackEntry.arguments
                             PremioScreen(
                                 porcentaje = args?.getString("porcentaje")?.toIntOrNull() ?: 100,
                                 estrellas = args?.getString("estrellas")?.toIntOrNull() ?: 0,
                                 monedas = args?.getString("monedas")?.toIntOrNull() ?: 0,
+                                puntos = args?.getString("puntos")?.toIntOrNull() ?: 0,
                                 onContinuar = { navController.popBackStack() }
                             )
                         }
-                        composable(NutriRoutes.RECOMPENSAS) {
+                        dialog(NutriRoutes.RECOMPENSAS) {
+                            val totalMonedas = remember(versionProgreso) {
+                                progreso.monedasTotales(actividadesPorNivel)
+                            }
                             val nutricionCompleto = progreso.nivelCompleto(1, preguntas.totalActividadesNivel(1)) &&
                                 progreso.nivelCompleto(2, preguntas.totalActividadesNivel(2)) &&
                                 progreso.nivelCompleto(3, preguntas.totalActividadesNivel(3))
@@ -663,19 +748,33 @@ class MainActivity : ComponentActivity() {
                             val todosNiveles = (1..7).all { progreso.nivelCompleto(it, preguntas.totalActividadesNivel(it)) }
                             val minijuegosCompleto = listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria")
                                 .all { progreso.minijuegoCompletado(it) }
+
+                            // Lógica de medallas automáticas (gratis si es perfecto)
+                            val nutricionPerfecto = progreso.moduloPerfecto(1..3)
+                            val deportePerfecto = progreso.moduloPerfecto(4..7)
+
                             val medallas = CatalogoMedallas.conProgreso(
                                 nutricionCompleto, actividadCompleto, todosNiveles, minijuegosCompleto
                             )
                             RecompensasScreen(
-                                monedas = progreso.monedasTotales(monedasPorNivel, actividadesPorNivel),
+                                monedas = totalMonedas,
                                 medallas = medallas,
-                                canjeadas = remember(versionProgreso) {
-                                    medallas.filter { progreso.recompensaCanjeada(it.id) }.map { it.id }.toSet()
+                                canjeadas = remember(versionProgreso, nutricionPerfecto, deportePerfecto) {
+                                    medallas.map { it.id }.filter { id -> 
+                                        progreso.recompensaCanjeada(id) 
+                                    }.toSet()
                                 },
                                 onCanjear = { medalla ->
-                                    val costo = if (medalla.especial) 500 else 200
-                                    progreso.canjearRecompensa(medalla.id, costo)
-                                    versionProgreso++
+                                    // Solo se permite canjear si NO es una de las automáticas (gratis)
+                                    val esAutomatica = (medalla.id == "frutas" && nutricionPerfecto) || 
+                                                       (medalla.id == "deportista" && deportePerfecto)
+                                    
+                                    if (!esAutomatica) {
+                                        // Ajuste de precios: Normales 50, Especial 150
+                                        val costo = if (medalla.especial) 150 else 50
+                                        progreso.canjearRecompensa(medalla.id, costo)
+                                        versionProgreso++
+                                    }
                                 },
                                 onCerrar = { navController.popBackStack() }
                             )
@@ -684,6 +783,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Libera los recursos de audio al cerrar la actividad
+        SoundManager.release()
     }
 }
 

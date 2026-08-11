@@ -137,7 +137,7 @@ fun SenderoScreen(
             // Botón para elegir el siguiente módulo (cuando este módulo está completo)
             if (moduloCompleto && modulo == 1) {
                 Button(
-                    onClick = onElegirModulo,
+                    onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onElegirModulo() },
                     colors = ButtonDefaults.buttonColors(containerColor = Mango),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().height(52.dp)
@@ -154,7 +154,7 @@ fun SenderoScreen(
             if (modulo == 2 || moduloCompleto) {
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
-                    onClick = onCambiarModulo,
+                    onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onCambiarModulo() },
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().height(52.dp)
                 ) {
@@ -166,23 +166,29 @@ fun SenderoScreen(
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(80.dp)) // Espacio extra al final para que el Snackbar no tape el último botón
         }
 
-        // Aviso de nivel bloqueado (desaparece solo)
+        // Aviso de nivel bloqueado (estilo flotante)
         if (mostrarBloqueado) {
             LaunchedEffect(mostrarBloqueado) {
                 delay(2200)
                 mostrarBloqueado = false
             }
-            Snackbar(
+            // Snackbar Host para manejar el snackbar sin afectar el layout
+            SnackbarHost(
+                hostState = remember { SnackbarHostState() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                containerColor = Ink,
-                contentColor = Color.White
+                    .padding(bottom = 16.dp)
             ) {
-                Text("🔒 Completa el nivel anterior para desbloquearlo")
+                Snackbar(
+                    containerColor = Ink,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("🔒 Completa el nivel anterior para desbloquearlo")
+                }
             }
         }
     }
@@ -225,7 +231,7 @@ private fun Nodo(
             modifier = Modifier
                 .size(64.dp)
                 .shadow(4.dp, CircleShape)
-                .clickable(onClick = onClick)
+                .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() })
                 .background(
                     color = if (nivel.bloqueado) Locked else Leaf,
                     shape = CircleShape
