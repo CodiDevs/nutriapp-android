@@ -50,7 +50,7 @@ fun SplashScreen(onComenzar: () -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "¡Aprende a comer sano y a moverte jugando!",
+            text = "Juega con tu hijo. Alimentación y movimiento.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
