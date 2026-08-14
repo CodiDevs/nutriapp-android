@@ -185,6 +185,13 @@ class ProgresoRepository(context: Context) {
 
     val usuarioNombre: String get() = prefs.getString("usuario_nombre", "") ?: ""
 
+    /** Marca que el padre o madre aceptó la política antes de guardar el perfil. */
+    fun guardarConsentimientoTutor() {
+        prefs.edit()
+            .putString("tutor_consent_at", System.currentTimeMillis().toString())
+            .apply()
+    }
+
     /** Borra TODO: usuario y progreso (para crear un registro nuevo). */
     fun borrarTodo() {
         prefs.edit().clear().apply()

@@ -36,6 +36,7 @@ import com.codidevs.nutriapp.ui.juegos.JuegosScreen
 import com.codidevs.nutriapp.ui.navigation.NutriRoutes
 import com.codidevs.nutriapp.ui.onboarding.ImcScreen
 import com.codidevs.nutriapp.ui.onboarding.ModulosScreen
+import com.codidevs.nutriapp.ui.onboarding.PrivacyScreen
 import com.codidevs.nutriapp.ui.onboarding.RegistroScreen
 import com.codidevs.nutriapp.ui.onboarding.SplashScreen
 import com.codidevs.nutriapp.ui.perfil.PerfilScreen
@@ -89,15 +90,22 @@ class MainActivity : ComponentActivity() {
                         composable(NutriRoutes.SPLASH) {
                             SplashScreen(onComenzar = {
                                 navController.navigate(
-                                    if (progreso.usuarioRegistrado) NutriRoutes.HOME else NutriRoutes.REGISTRO
+                                    if (progreso.usuarioRegistrado) NutriRoutes.HOME
+                                    else NutriRoutes.REGISTRO
                                 )
                             })
+                        }
+                        composable(NutriRoutes.PRIVACY) {
+                            PrivacyScreen(onBack = { navController.popBackStack() })
                         }
                         composable(NutriRoutes.REGISTRO) {
                             RegistroScreen(
                                 onBack = { navController.popBackStack() },
+                                onVerPrivacidad = {
+                                    navController.navigate(NutriRoutes.PRIVACY)
+                                },
                                 onContinuar = { nombre, edad, peso, estatura ->
-                                    // Codificamos los datos para que viajen seguros en la ruta
+                                    progreso.guardarConsentimientoTutor()
                                     navController.navigate(
                                         "${NutriRoutes.IMC}/${Uri.encode(nombre)}/$edad/$peso/$estatura"
                                     )
@@ -269,8 +277,10 @@ class MainActivity : ComponentActivity() {
                                             onVerRecompensas = {
                                                 navController.navigate(NutriRoutes.RECOMPENSAS)
                                             },
+                                            onVerPrivacidad = {
+                                                navController.navigate(NutriRoutes.PRIVACY)
+                                            },
                                             onCrearRegistro = {
-                                                // Borra usuario y progreso, y reinicia el registro
                                                 progreso.borrarTodo()
                                                 nombreUsuario = ""
                                                 versionProgreso++

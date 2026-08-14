@@ -1,8 +1,9 @@
 package com.codidevs.nutriapp.ui.onboarding
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,21 +15,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.components.ScreenHeader
 import com.codidevs.nutriapp.ui.theme.Leaf
-import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoLight
 import com.codidevs.nutriapp.ui.theme.Sky
 import com.codidevs.nutriapp.ui.theme.Berry
 import com.codidevs.nutriapp.ui.theme.BerryLight
-import kotlin.math.pow
-import kotlin.math.roundToInt
 
-/**
- * Cálculo del IMC y su clasificación para niños de 6 a 12 años.
- * El IMC se calcula igual que en adultos, pero se clasifica según percentiles
- * por edad (referencia OMS pediátrica, simplificada).
- */
+/** Indicador de IMC aproximado. No es un diagnóstico clínico. */
 fun calcularImc(pesoKg: Double, estaturaCm: Double): Double {
     if (pesoKg <= 0 || estaturaCm <= 0) return 0.0
     val alturaM = estaturaCm / 100.0
@@ -72,9 +66,13 @@ enum class ClasificacionImc(
     )
 }
 
-/** Clasificación simplificada por edad (años) según la referencia OMS pediátrica. */
+object HealthDisclaimer {
+    const val TEXTO =
+        "NutriApp no es un dispositivo médico y no diagnostica, trata ni previene ninguna condición. Consulta a un profesional de la salud."
+}
+
+/** Rangos aproximados por edad. No son percentiles clínicos ni un diagnóstico. */
 fun clasificarImc(imc: Double, edadAnios: Int): ClasificacionImc {
-    // Rangos de IMC "normales" aproximados por edad (OMS)
     val normalMin = when (edadAnios) {
         6 -> 13.5; 7 -> 13.5; 8 -> 13.6; 9 -> 13.8; 10 -> 14.0
         11 -> 14.2; 12 -> 14.5
@@ -110,12 +108,13 @@ fun ImcScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(12.dp))
 
-        ScreenHeader(titulo = "Tu estado nutricional", onBack = onBack)
+        ScreenHeader(titulo = "Indicador de IMC", onBack = onBack)
 
         Spacer(Modifier.height(28.dp))
 
@@ -163,6 +162,16 @@ fun ImcScreen(
             }
         }
 
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = HealthDisclaimer.TEXTO,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(Modifier.height(24.dp))
 
         // Botón de aventura
@@ -177,7 +186,7 @@ fun ImcScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // Información del niño
+        // Datos del perfil registrado
         Text(
             text = "$nombre · $edad años · ${peso} kg · ${estatura} cm",
             style = MaterialTheme.typography.bodySmall,

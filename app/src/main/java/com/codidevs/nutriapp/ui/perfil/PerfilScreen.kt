@@ -42,6 +42,7 @@ fun PerfilScreen(
     medallaPerfil: String, // id de la medalla puesta en el perfil ("" = ninguna)
     onPonerMedalla: (String) -> Unit,
     onVerRecompensas: () -> Unit,
+    onVerPrivacidad: () -> Unit,
     onCrearRegistro: () -> Unit
 ) {
     // Evita clics repetidos
@@ -59,9 +60,7 @@ fun PerfilScreen(
     val medallaMostrada = medallas.firstOrNull { it.id == medallaPerfil }
         ?: medallas.filter { it.desbloqueada }.maxByOrNull { it.orden }
     val desbloqueadas = medallas.filter { it.desbloqueada }
-    // Mostrar opción de "poner en perfil" para la medalla tocada
     var medallaSeleccionada by remember { mutableStateOf<String?>(null) }
-    // Diálogo de confirmación para crear otro registro
     var mostrarDialogoRegistro by remember { mutableStateOf(false) }
 
     Column(
@@ -291,6 +290,27 @@ fun PerfilScreen(
 
         Spacer(Modifier.height(12.dp))
 
+        // Política de privacidad (texto local, sin Internet)
+        OutlinedButton(
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
+                if (!yaHaciendoClick) {
+                    onVerPrivacidad()
+                }
+            },
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = LeafDark),
+            border = BorderStroke(2.dp, Leaf),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
+            Text(
+                text = "Política de privacidad",
+                style = MaterialTheme.typography.labelLarge,
+                color = LeafDark
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
         // Crear otro registro
         OutlinedButton(
             onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
@@ -313,23 +333,23 @@ fun PerfilScreen(
         Spacer(Modifier.height(20.dp))
     }
 
-    // Aviso de confirmación antes de crear otro registro
     if (mostrarDialogoRegistro) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoRegistro = false },
             title = { Text("¿Crear otro registro?", fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Ten en cuenta que el registro actual con todo su progreso " +
-                        "(niveles, monedas y medallas) se eliminará."
+                    "El registro actual y todo su progreso (niveles, monedas y medallas) se eliminarán."
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    mostrarDialogoRegistro = false
-                    onCrearRegistro()
-                }) {
-                    Text("Sí, crear", color = Berry, fontWeight = FontWeight.Bold)
+                TextButton(
+                    onClick = com.codidevs.nutriapp.data.audio.onClickConSonido {
+                        mostrarDialogoRegistro = false
+                        onCrearRegistro()
+                    }
+                ) {
+                    Text("Sí, borrar", color = Berry, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {

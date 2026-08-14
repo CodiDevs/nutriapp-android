@@ -8,61 +8,62 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.components.ScreenHeader
 import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
-import com.codidevs.nutriapp.ui.theme.LeafLight
-import com.codidevs.nutriapp.ui.theme.Mango
-import com.codidevs.nutriapp.ui.theme.MangoLight
 
 /**
- * Pantalla de Registro: datos generales del niño (nombre, edad, peso, estatura).
- * El usuario presiona "Continuar" y pasa al cálculo del IMC.
+ * Registro: el padre o madre completa los datos de su hijo.
  */
 @Composable
 fun RegistroScreen(
     onBack: () -> Unit,
+    onVerPrivacidad: () -> Unit,
     onContinuar: (nombre: String, edad: String, peso: String, estatura: String) -> Unit
 ) {
     var nombre by rememberSaveable { mutableStateOf("") }
     var edad by rememberSaveable { mutableStateOf("") }
     var peso by rememberSaveable { mutableStateOf("") }
     var estatura by rememberSaveable { mutableStateOf("") }
+    var aceptaPrivacidad by rememberSaveable { mutableStateOf(false) }
 
     var errorNombre by rememberSaveable { mutableStateOf<String?>(null) }
     var errorEdad by rememberSaveable { mutableStateOf<String?>(null) }
     var errorPeso by rememberSaveable { mutableStateOf<String?>(null) }
     var errorEstatura by rememberSaveable { mutableStateOf<String?>(null) }
+    var errorAcepta by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun validarYContinuar() {
-        errorNombre = if (nombre.isBlank()) "Escribe tu nombre" else null
+        errorNombre = if (nombre.isBlank()) "Escribe el nombre de tu hijo" else null
         errorEdad = when {
-            edad.isBlank() -> "Escribe tu edad"
+            edad.isBlank() -> "Escribe la edad"
             edad.toIntOrNull() == null -> "Solo números"
             edad.toInt() !in 4..14 -> "Debe ser entre 4 y 14 años"
             else -> null
         }
         errorPeso = when {
-            peso.isBlank() -> "Escribe tu peso"
+            peso.isBlank() -> "Escribe el peso"
             peso.toDoubleOrNull() == null -> "Solo números"
             peso.toDouble() <= 0 -> "Peso no válido"
             else -> null
         }
         errorEstatura = when {
-            estatura.isBlank() -> "Escribe tu estatura"
+            estatura.isBlank() -> "Escribe la estatura"
             estatura.toDoubleOrNull() == null -> "Solo números"
             estatura.toDouble() <= 0 -> "Estatura no válida"
             else -> null
         }
-        val ok = errorNombre == null && errorEdad == null && errorPeso == null && errorEstatura == null
+        errorAcepta = if (!aceptaPrivacidad) "Acepta la política de privacidad" else null
+        val ok = errorNombre == null && errorEdad == null && errorPeso == null &&
+            errorEstatura == null && errorAcepta == null
         if (ok) {
             onContinuar(nombre.trim(), edad.trim(), peso.trim(), estatura.trim())
         }
@@ -77,12 +78,12 @@ fun RegistroScreen(
     ) {
         Spacer(Modifier.height(12.dp))
 
-        ScreenHeader(titulo = "Cuéntanos de ti", onBack = onBack)
+        ScreenHeader(titulo = "Datos de tu hijo", onBack = onBack)
 
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Así sabremos cómo ayudarte a crecer sano",
+            text = "Tú registras el perfil. Luego pueden jugar juntos.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth()
@@ -173,6 +174,47 @@ fun RegistroScreen(
             ),
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = aceptaPrivacidad,
+                onCheckedChange = {
+                    aceptaPrivacidad = it
+                    errorAcepta = null
+                },
+                colors = CheckboxDefaults.colors(checkedColor = Leaf)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Acepto la política de privacidad.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Leer política de privacidad",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LeafDark,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable(
+                        onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onVerPrivacidad() }
+                    )
+                )
+            }
+        }
+        errorAcepta?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+            )
+        }
 
         Spacer(Modifier.height(28.dp))
 

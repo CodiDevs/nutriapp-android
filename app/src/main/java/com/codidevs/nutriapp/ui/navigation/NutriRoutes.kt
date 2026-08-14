@@ -2,6 +2,7 @@ package com.codidevs.nutriapp.ui.navigation
 
 object NutriRoutes {
     const val SPLASH = "splash"
+    const val PRIVACY = "privacy"
     const val REGISTRO = "registro"
     const val IMC = "imc"
     const val MODULOS = "modulos"
