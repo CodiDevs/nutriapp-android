@@ -50,7 +50,7 @@ import com.codidevs.nutriapp.ui.theme.NutriAppTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Inicializa el gestor de sonidos (beeps) para clicks y ruleta
+        // Inicializa el gestor de sonidos (beeps) para clics y ruleta
         SoundManager.init()
         // Barras del sistema (estado y navegación) del color crema de la app,
         // con íconos oscuros para que la hora y los íconos se vean bien.
@@ -247,16 +247,13 @@ class MainActivity : ComponentActivity() {
                                         }
                                     )
                                     "perfil" -> {
-                                        val nutricionCompleto = progreso.nivelCompleto(1, preguntas.totalActividadesNivel(1)) &&
-                                            progreso.nivelCompleto(2, preguntas.totalActividadesNivel(2)) &&
-                                            progreso.nivelCompleto(3, preguntas.totalActividadesNivel(3))
-                                        val actividadCompleto = progreso.nivelCompleto(4, preguntas.totalActividadesNivel(4)) &&
-                                            progreso.nivelCompleto(5, preguntas.totalActividadesNivel(5)) &&
-                                            progreso.nivelCompleto(6, preguntas.totalActividadesNivel(6)) &&
-                                            progreso.nivelCompleto(7, preguntas.totalActividadesNivel(7))
-                                        val todosNiveles = (1..7).all { progreso.nivelCompleto(it, preguntas.totalActividadesNivel(it)) }
+                                        val nivelesCompletados = (1..7).filter { 
+                                            progreso.nivelCompleto(it, preguntas.totalActividadesNivel(it)) 
+                                        }.toSet()
+                                        
                                         val minijuegosCompleto = listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria")
                                             .all { progreso.minijuegoCompletado(it) }
+                                            
                                         PerfilScreen(
                                             nombre = nombreUsuario,
                                             nivel = nivelActualGlobal(progreso, preguntas),
@@ -266,11 +263,9 @@ class MainActivity : ComponentActivity() {
                                             },
                                             medallas = remember(versionProgreso) {
                                                 CatalogoMedallas.conProgreso(
-                                                    nutricionCompleto,
-                                                    actividadCompleto,
-                                                    todosNiveles,
+                                                    nivelesCompletados,
                                                     minijuegosCompleto
-                                                )
+                                                ).filter { progreso.recompensaCanjeada(it.id) }
                                             },
                                             medallaPerfil = progreso.medallaPerfil,
                                             onPonerMedalla = { id ->
@@ -753,42 +748,41 @@ class MainActivity : ComponentActivity() {
                             val totalMonedas = remember(versionProgreso) {
                                 progreso.monedasTotales(actividadesPorNivel)
                             }
-                            val nutricionCompleto = progreso.nivelCompleto(1, preguntas.totalActividadesNivel(1)) &&
-                                progreso.nivelCompleto(2, preguntas.totalActividadesNivel(2)) &&
-                                progreso.nivelCompleto(3, preguntas.totalActividadesNivel(3))
-                            val actividadCompleto = progreso.nivelCompleto(4, preguntas.totalActividadesNivel(4)) &&
-                                progreso.nivelCompleto(5, preguntas.totalActividadesNivel(5)) &&
-                                progreso.nivelCompleto(6, preguntas.totalActividadesNivel(6)) &&
-                                progreso.nivelCompleto(7, preguntas.totalActividadesNivel(7))
-                            val todosNiveles = (1..7).all { progreso.nivelCompleto(it, preguntas.totalActividadesNivel(it)) }
+                            val nivelesCompletados = (1..7).filter { 
+                                progreso.nivelCompleto(it, preguntas.totalActividadesNivel(it)) 
+                            }.toSet()
+                            
                             val minijuegosCompleto = listOf("arrastrar", "vf", "completa", "mejor", "ruleta", "memoria")
                                 .all { progreso.minijuegoCompletado(it) }
 
-                            // Lógica de medallas automáticas (gratis si es perfecto)
-                            val nutricionPerfecto = progreso.moduloPerfecto(1..3)
-                            val deportePerfecto = progreso.moduloPerfecto(4..7)
+                            val nutricionCompletado = (1..3).all { it in nivelesCompletados }
+                            val deporteCompletado = (4..7).all { it in nivelesCompletados }
 
                             val medallas = CatalogoMedallas.conProgreso(
-                                nutricionCompleto, actividadCompleto, todosNiveles, minijuegosCompleto
+                                nivelesCompletados,
+                                minijuegosCompleto
                             )
                             RecompensasScreen(
                                 monedas = totalMonedas,
                                 medallas = medallas,
-                                canjeadas = remember(versionProgreso, nutricionPerfecto, deportePerfecto) {
+                                canjeadas = remember(versionProgreso) {
                                     medallas.map { it.id }.filter { id -> 
                                         progreso.recompensaCanjeada(id) 
                                     }.toSet()
                                 },
                                 onCanjear = { medalla ->
-                                    // Solo se permite canjear si NO es una de las automáticas (gratis)
-                                    val esAutomatica = (medalla.id == "frutas" && nutricionPerfecto) || 
-                                                       (medalla.id == "deportista" && deportePerfecto)
+                                    val esGratis = (medalla.id == "frutas" && nutricionCompletado) || 
+                                                  (medalla.id == "deportista" && deporteCompletado)
                                     
-                                    if (!esAutomatica) {
-                                        // Ajuste de precios: Normales 50, Especial 150
-                                        val costo = if (medalla.especial) 150 else 50
-                                        progreso.canjearRecompensa(medalla.id, costo)
+                                    if (esGratis) {
+                                        progreso.canjearRecompensa(medalla.id, 0)
                                         versionProgreso++
+                                    } else {
+                                        val costo = if (medalla.especial) 150 else 50
+                                        if (totalMonedas >= costo) {
+                                            progreso.canjearRecompensa(medalla.id, costo)
+                                            versionProgreso++
+                                        }
                                     }
                                 },
                                 onCerrar = { navController.popBackStack() }

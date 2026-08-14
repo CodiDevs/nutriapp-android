@@ -105,7 +105,7 @@ private fun MinijuegoTarjeta(
         shadowElevation = 3.dp,
         modifier = modifier
             .height(130.dp)
-            .pulsoAnimado(escalaFinal = 1.04f) // Latido ligero para los minijuegos
+            .pulsoAnimado(enabled = !completado, escalaFinal = 1.04f) // Deja de latir si ya se completó
             .clickable(onClick = onClick)
     ) {
         Column(

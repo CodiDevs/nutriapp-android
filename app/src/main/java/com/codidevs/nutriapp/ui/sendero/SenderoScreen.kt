@@ -250,11 +250,14 @@ private fun Nodo(
     estrellas: Int, // estrellas totales del nivel (0-3)
     onClick: () -> Unit
 ) {
+    // Solo pulsamos si es el nivel actual Y aún no está completado al 100% (3 estrellas)
+    val debePulsar = nivel.actual && estrellas < 3
+
     // Animación de pulso para el nivel actual
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val escala by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (nivel.actual) 1.15f else 1f,
+        targetValue = if (debePulsar) 1.15f else 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -265,7 +268,7 @@ private fun Nodo(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {
             // Círculo de brillo/pulso detrás del nodo actual
-            if (nivel.actual) {
+            if (debePulsar) {
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -277,8 +280,8 @@ private fun Nodo(
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .scale(if (nivel.actual) escala else 1f)
-                    .shadow(if (nivel.actual) 8.dp else 4.dp, CircleShape)
+                    .scale(if (debePulsar) escala else 1f)
+                    .shadow(if (debePulsar) 8.dp else 4.dp, CircleShape)
                     .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() })
                     .background(
                         color = if (nivel.bloqueado) Locked else Leaf,

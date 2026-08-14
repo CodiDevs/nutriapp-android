@@ -147,16 +147,6 @@ class ProgresoRepository(context: Context) {
 
     /** Indica si una recompensa fue canjeada. */
     fun recompensaCanjeada(id: String): Boolean {
-        // Las medallas de "frutas" y "deportista" son automáticas:
-        // se consideran "canjeadas" gratis si los módulos están al 100%.
-        if (id == "frutas") {
-            val completo = (1..3).all { nivelCompletoAl100(it) }
-            if (completo) return true
-        }
-        if (id == "deportista") {
-            val completo = (4..7).all { nivelCompletoAl100(it) }
-            if (completo) return true
-        }
         return prefs.getBoolean("canjeada_$id", false)
     }
 

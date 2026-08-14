@@ -34,27 +34,25 @@ object CatalogoMedallas {
         )
     )
 
-    /** Marca las medallas desbloqueadas según el progreso. */
+    /** Marca las medallas desbloqueadas según el progreso granular. */
     fun conProgreso(
-        nutricionCompleto: Boolean,
-        actividadCompleto: Boolean,
-        todosNivelesCompleto: Boolean,
+        nivelesCompletados: Set<Int>,
         minijuegosCompleto: Boolean
     ): List<MedallaInfo> {
-        val especialDesbloqueada = todosNivelesCompleto && minijuegosCompleto
+        val todosNiveles = (1..7).all { it in nivelesCompletados }
+        val especialDesbloqueada = todosNiveles && minijuegosCompleto
+        
         return TODAS.map { m ->
             val desbloqueada = when (m.id) {
-                "frutas" -> nutricionCompleto
-                "verduras" -> nutricionCompleto
-                "agua" -> nutricionCompleto && actividadCompleto
-                "deportista" -> actividadCompleto
-                "corazon" -> actividadCompleto
-                "habitos" -> todosNivelesCompleto
+                "frutas" -> (1..3).all { it in nivelesCompletados } // Módulo 1 completo
+                "verduras" -> 1 in nivelesCompletados
+                "agua" -> 5 in nivelesCompletados
+                "deportista" -> (4..7).all { it in nivelesCompletados } // Módulo 2 completo
+                "corazon" -> 4 in nivelesCompletados
+                "habitos" -> (1..7).all { it in nivelesCompletados } // Todos los niveles
                 "especial" -> especialDesbloqueada
                 else -> false
             }
-            // Ahora todas nacen con el candado quitado si el módulo está "desbloqueado",
-            // pero la lógica de canjeada (gratis vs pagada) se maneja en el Repository.
             m.copy(desbloqueada = desbloqueada)
         }
     }

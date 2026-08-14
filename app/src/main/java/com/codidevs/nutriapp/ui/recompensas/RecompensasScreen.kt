@@ -43,6 +43,11 @@ fun RecompensasScreen(
     var procesandoCanje by remember { mutableStateOf(false) }
     var cerrando by remember { mutableStateOf(false) }
 
+    // Resetea el bloqueo cuando el conjunto de canjeadas cambia (éxito)
+    LaunchedEffect(canjeadas) {
+        procesandoCanje = false
+    }
+
     // Panel que sube desde abajo
     ModalBottomSheet(
         onDismissRequest = {
