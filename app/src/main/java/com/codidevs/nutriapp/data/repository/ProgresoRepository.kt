@@ -172,18 +172,21 @@ class ProgresoRepository(context: Context) {
     }
 
     /** Guarda los datos del usuario registrado. */
-    fun guardarUsuario(nombre: String, edad: Int, peso: Double, estatura: Double) {
+    fun guardarUsuario(nombre: String, edad: Int, peso: Double, estatura: Double, sexo: String) {
         prefs.edit()
             .putString("usuario_nombre", nombre)
             .putInt("usuario_edad", edad)
             .putString("usuario_peso", peso.toString())
             .putString("usuario_estatura", estatura.toString())
+            .putString("usuario_sexo", sexo)
             .apply()
     }
 
     val usuarioRegistrado: Boolean get() = prefs.contains("usuario_nombre")
 
     val usuarioNombre: String get() = prefs.getString("usuario_nombre", "") ?: ""
+
+    val usuarioSexo: String get() = prefs.getString("usuario_sexo", "niño") ?: "niño"
 
     /** Borra TODO: usuario y progreso (para crear un registro nuevo). */
     fun borrarTodo() {

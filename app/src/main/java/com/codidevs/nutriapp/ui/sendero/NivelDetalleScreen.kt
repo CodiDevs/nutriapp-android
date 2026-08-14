@@ -1,6 +1,7 @@
 package com.codidevs.nutriapp.ui.sendero
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,6 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.components.ScreenHeader
+import com.codidevs.nutriapp.ui.theme.BgApp
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Leaf
@@ -49,6 +51,7 @@ fun NivelDetalleScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(BgApp)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         ScreenHeader(titulo = "Detalle del nivel", onBack = onBack)

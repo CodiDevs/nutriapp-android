@@ -65,6 +65,14 @@ class MainActivity : ComponentActivity() {
                     val progreso = remember { ProgresoRepository(applicationContext) }
                     val preguntas = remember { PreguntasRepository(applicationContext) }
                     
+                    // LIMPIEZA DE DATOS DE PRUEBA (Solo la primera vez que se abre esta versión)
+                    val prefs = getSharedPreferences("config_app", android.content.Context.MODE_PRIVATE)
+                    val limpiaRealizada = prefs.getBoolean("limpieza_v1", false)
+                    if (!limpiaRealizada) {
+                        progreso.borrarTodo()
+                        prefs.edit().putBoolean("limpieza_v1", true).apply()
+                    }
+
                     // Registra el día activo para la racha (solo una vez por apertura)
                     remember { progreso.registrarDiaActivo() }
                     // Si ya hay un usuario registrado, arranca directo en el Home
@@ -96,31 +104,33 @@ class MainActivity : ComponentActivity() {
                         composable(NutriRoutes.REGISTRO) {
                             RegistroScreen(
                                 onBack = { navController.popBackStack() },
-                                onContinuar = { nombre, edad, peso, estatura ->
+                                onContinuar = { nombre, edad, peso, estatura, sexo ->
                                     // Codificamos los datos para que viajen seguros en la ruta
                                     navController.navigate(
-                                        "${NutriRoutes.IMC}/${Uri.encode(nombre)}/$edad/$peso/$estatura"
+                                        "${NutriRoutes.IMC}/${Uri.encode(nombre)}/$edad/$peso/$estatura/$sexo"
                                     )
                                 }
                             )
                         }
                         composable(
-                            "${NutriRoutes.IMC}/{nombre}/{edad}/{peso}/{estatura}"
+                            "${NutriRoutes.IMC}/{nombre}/{edad}/{peso}/{estatura}/{sexo}"
                         ) { backStackEntry ->
                             val args = backStackEntry.arguments
                             val nombre = args?.getString("nombre").orEmpty()
                             val edad = args?.getString("edad")?.toIntOrNull() ?: 0
                             val peso = args?.getString("peso")?.toDoubleOrNull() ?: 0.0
                             val estatura = args?.getString("estatura")?.toDoubleOrNull() ?: 0.0
+                            val sexo = args?.getString("sexo") ?: "niño"
                             ImcScreen(
                                 nombre = nombre,
                                 edad = edad,
                                 peso = peso,
                                 estatura = estatura,
+                                sexo = sexo,
                                 onBack = { navController.popBackStack() },
                                 onAventura = {
                                     // Guarda el usuario registrado (persistente)
-                                    progreso.guardarUsuario(nombre, edad, peso, estatura)
+                                    progreso.guardarUsuario(nombre, edad, peso, estatura, sexo)
                                     nombreUsuario = nombre
                                     navController.navigate(
                                         "${NutriRoutes.MODULOS}/${Uri.encode(nombre)}"
@@ -148,13 +158,13 @@ class MainActivity : ComponentActivity() {
                                 onNutricion = {
                                     nombreUsuario = nombre
                                     moduloActual = 1
-                                    tabActiva = "sendero"
+                                    // Mantiene la pestaña actual (Home si viene de registro, Sendero si ya estaba jugando)
                                     navController.navigate(NutriRoutes.HOME)
                                 },
                                 onActividadFisica = {
                                     nombreUsuario = nombre
                                     moduloActual = 2
-                                    tabActiva = "sendero"
+                                    // Mantiene la pestaña actual
                                     navController.navigate(NutriRoutes.HOME)
                                 }
                             )
@@ -250,6 +260,7 @@ class MainActivity : ComponentActivity() {
                                         PerfilScreen(
                                             nombre = nombreUsuario,
                                             nivel = nivelActualGlobal(progreso, preguntas),
+                                            sexo = progreso.usuarioSexo,
                                             puntos = remember(versionProgreso) {
                                                 progreso.puntosTotales(actividadesPorNivel)
                                             },
@@ -282,6 +293,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                     else -> HomeScreen(
                                         nombre = nombreUsuario,
+                                        sexo = progreso.usuarioSexo,
                                         nivelTexto = nivelActualTexto(progreso, preguntas, moduloActual),
                                         onSendero = { tabActiva = "sendero" },
                                         onRecompensas = {

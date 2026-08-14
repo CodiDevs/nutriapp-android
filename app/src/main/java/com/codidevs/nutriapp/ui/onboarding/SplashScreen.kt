@@ -1,15 +1,20 @@
 package com.codidevs.nutriapp.ui.onboarding
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.R
 import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
 
@@ -18,23 +23,31 @@ fun SplashScreen(onComenzar: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White) // Fondo blanco para fundir el cuadro de la imagen
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Mostramos la imagen con recorte circular por seguridad
+        Image(
+            painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+            contentDescription = "NutriApp Logo",
+            modifier = Modifier
+                .size(170.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         Text(
-            text = "🥦 NutriApp",
-            style = MaterialTheme.typography.headlineSmall,
+            text = "NutriApp",
+            style = MaterialTheme.typography.headlineLarge,
             color = LeafDark,
-            fontSize = 30.sp,
             fontWeight = FontWeight.ExtraBold
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(text = "🦸", fontSize = 70.sp)
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "¡Aprende a comer sano y a moverte jugando!",
@@ -43,11 +56,11 @@ fun SplashScreen(onComenzar: () -> Unit) {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Button(
-            onClick = onComenzar,
-            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+            onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onComenzar() },
+            colors = ButtonDefaults.buttonColors(
                 containerColor = Leaf
             ),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),

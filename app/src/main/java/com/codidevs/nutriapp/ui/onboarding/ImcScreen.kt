@@ -101,6 +101,7 @@ fun ImcScreen(
     edad: Int,
     peso: Double,
     estatura: Double,
+    sexo: String,
     onBack: () -> Unit,
     onAventura: () -> Unit
 ) {
@@ -179,7 +180,7 @@ fun ImcScreen(
 
         // Información del niño
         Text(
-            text = "$nombre · $edad años · ${peso} kg · ${estatura} cm",
+            text = "$nombre · $edad años · ${peso} kg · ${estatura} cm · Sexo: ${sexo.replaceFirstChar { it.uppercase() }}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

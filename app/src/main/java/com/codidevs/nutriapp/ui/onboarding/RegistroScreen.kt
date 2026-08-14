@@ -1,5 +1,7 @@
 package com.codidevs.nutriapp.ui.onboarding
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,9 +19,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.components.ScreenHeader
+import com.codidevs.nutriapp.ui.theme.BgApp
+import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
 import com.codidevs.nutriapp.ui.theme.LeafLight
+import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoLight
 
@@ -30,12 +35,13 @@ import com.codidevs.nutriapp.ui.theme.MangoLight
 @Composable
 fun RegistroScreen(
     onBack: () -> Unit,
-    onContinuar: (nombre: String, edad: String, peso: String, estatura: String) -> Unit
+    onContinuar: (nombre: String, edad: String, peso: String, estatura: String, sexo: String) -> Unit
 ) {
     var nombre by rememberSaveable { mutableStateOf("") }
     var edad by rememberSaveable { mutableStateOf("") }
     var peso by rememberSaveable { mutableStateOf("") }
     var estatura by rememberSaveable { mutableStateOf("") }
+    var sexo by rememberSaveable { mutableStateOf("niño") }
 
     var errorNombre by rememberSaveable { mutableStateOf<String?>(null) }
     var errorEdad by rememberSaveable { mutableStateOf<String?>(null) }
@@ -47,7 +53,7 @@ fun RegistroScreen(
         errorEdad = when {
             edad.isBlank() -> "Escribe tu edad"
             edad.toIntOrNull() == null -> "Solo números"
-            edad.toInt() !in 4..14 -> "Debe ser entre 4 y 14 años"
+            edad.toInt() !in 6..12 -> "Debe ser entre 6 y 12 años"
             else -> null
         }
         errorPeso = when {
@@ -64,13 +70,14 @@ fun RegistroScreen(
         }
         val ok = errorNombre == null && errorEdad == null && errorPeso == null && errorEstatura == null
         if (ok) {
-            onContinuar(nombre.trim(), edad.trim(), peso.trim(), estatura.trim())
+            onContinuar(nombre.trim(), edad.trim(), peso.trim(), estatura.trim(), sexo)
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(BgApp)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -102,9 +109,9 @@ fun RegistroScreen(
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Leaf,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                unfocusedBorderColor = LineColor,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -123,9 +130,9 @@ fun RegistroScreen(
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Leaf,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                unfocusedBorderColor = LineColor,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -145,9 +152,9 @@ fun RegistroScreen(
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Leaf,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                unfocusedBorderColor = LineColor,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -167,14 +174,66 @@ fun RegistroScreen(
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Leaf,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                unfocusedBorderColor = LineColor,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
             ),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(20.dp))
+
+        // Selección de Sexo
+        Text(
+            text = "Sexo",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = Ink,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            val esNiño = sexo == "niño"
+            Surface(
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { sexo = "niño" },
+                color = if (esNiño) Mango else Color.White,
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, if (esNiño) Mango else LineColor),
+                modifier = Modifier.weight(1f).height(52.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "👦 Niño", style = MaterialTheme.typography.labelLarge, color = if (esNiño) Color.White else Ink)
+                }
+            }
+
+            val esNiña = sexo == "niña"
+            Surface(
+                onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { sexo = "niña" },
+                color = if (esNiña) Mango else Color.White,
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, if (esNiña) Mango else LineColor),
+                modifier = Modifier.weight(1f).height(52.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "👧 Niña", style = MaterialTheme.typography.labelLarge, color = if (esNiña) Color.White else Ink)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
 
         Button(
             onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { validarYContinuar() },

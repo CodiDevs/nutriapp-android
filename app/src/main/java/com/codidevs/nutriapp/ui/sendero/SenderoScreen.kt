@@ -1,5 +1,6 @@
 package com.codidevs.nutriapp.ui.sendero
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +61,9 @@ fun SenderoScreen(
     onCambiarModulo: () -> Unit
 ) {
     var mostrarBloqueado by remember { mutableStateOf(false) }
+    
+    // Estado para la animación de error (shake)
+    var errorNivelId by remember { mutableStateOf<Int?>(null) }
 
     // Niveles según el módulo
     val rango = if (modulo == 1) 1..3 else 4..7
@@ -121,9 +126,11 @@ fun SenderoScreen(
                 NodoNivel(
                     nivel = nivel,
                     estrellas = estrellasNivel[nivel.numero] ?: 0,
+                    sacudir = errorNivelId == nivel.numero,
                     onClick = {
                         if (nivel.bloqueado) {
                             mostrarBloqueado = true
+                            errorNivelId = nivel.numero
                         } else {
                             onNivelClick(nivel.numero)
                         }
@@ -174,6 +181,7 @@ fun SenderoScreen(
             LaunchedEffect(mostrarBloqueado) {
                 delay(2200)
                 mostrarBloqueado = false
+                errorNivelId = null
             }
             // Snackbar Host para manejar el snackbar sin afectar el layout
             SnackbarHost(
@@ -198,13 +206,29 @@ fun SenderoScreen(
 private fun NodoNivel(
     nivel: NivelSendero,
     estrellas: Int,
+    sacudir: Boolean = false,
     onClick: () -> Unit,
     reversed: Boolean
 ) {
+    // Resetear el estado de sacudida después de la animación
+    var shakeOffset by remember { mutableStateOf(0f) }
+    LaunchedEffect(sacudir) {
+        if (sacudir) {
+            repeat(6) {
+                shakeOffset = 10f
+                delay(50)
+                shakeOffset = -10f
+                delay(50)
+            }
+            shakeOffset = 0f
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = 10.dp)
+            .offset(x = shakeOffset.dp),
         horizontalArrangement = if (reversed) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -226,28 +250,45 @@ private fun Nodo(
     estrellas: Int, // estrellas totales del nivel (0-3)
     onClick: () -> Unit
 ) {
+    // Animación de pulso para el nivel actual
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val escala by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (nivel.actual) 1.15f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "escala"
+    )
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .shadow(4.dp, CircleShape)
-                .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() })
-                .background(
-                    color = if (nivel.bloqueado) Locked else Leaf,
-                    shape = CircleShape
-                )
-                .border(3.dp, if (nivel.bloqueado) Color(0xFFB9B39E) else LeafDark, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            // Borde punteado si es el nivel actual
+        Box(contentAlignment = Alignment.Center) {
+            // Círculo de brillo/pulso detrás del nodo actual
             if (nivel.actual) {
                 Box(
                     modifier = Modifier
-                        .size(78.dp)
-                        .border(3.dp, Mango, CircleShape)
+                        .size(72.dp)
+                        .scale(escala)
+                        .background(Mango.copy(alpha = 0.3f), CircleShape)
                 )
             }
-            Text(text = nivel.emoji, fontSize = 28.sp)
+
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .scale(if (nivel.actual) escala else 1f)
+                    .shadow(if (nivel.actual) 8.dp else 4.dp, CircleShape)
+                    .clickable(onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { onClick() })
+                    .background(
+                        color = if (nivel.bloqueado) Locked else Leaf,
+                        shape = CircleShape
+                    )
+                    .border(3.dp, if (nivel.bloqueado) Color(0xFFB9B39E) else LeafDark, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = nivel.emoji, fontSize = 28.sp)
+            }
         }
         // Estrellas del nivel debajo del nodo
         if (estrellas > 0) {

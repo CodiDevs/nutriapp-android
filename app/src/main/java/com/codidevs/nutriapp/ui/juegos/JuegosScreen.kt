@@ -1,6 +1,7 @@
 package com.codidevs.nutriapp.ui.juegos
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codidevs.nutriapp.ui.components.pulsoAnimado
+import com.codidevs.nutriapp.ui.theme.BgApp
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.InkSoft
 import com.codidevs.nutriapp.ui.theme.Leaf
@@ -43,6 +46,7 @@ fun JuegosScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(BgApp)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Spacer(Modifier.height(4.dp))
@@ -101,6 +105,7 @@ private fun MinijuegoTarjeta(
         shadowElevation = 3.dp,
         modifier = modifier
             .height(130.dp)
+            .pulsoAnimado(escalaFinal = 1.04f) // Latido ligero para los minijuegos
             .clickable(onClick = onClick)
     ) {
         Column(

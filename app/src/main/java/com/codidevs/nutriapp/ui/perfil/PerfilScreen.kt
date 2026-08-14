@@ -37,6 +37,7 @@ import com.codidevs.nutriapp.data.models.MedallaInfo
 fun PerfilScreen(
     nombre: String,
     nivel: Int,
+    sexo: String = "niño",
     puntos: Int = 0,
     medallas: List<MedallaInfo>,
     medallaPerfil: String, // id de la medalla puesta en el perfil ("" = ninguna)
@@ -84,7 +85,10 @@ fun PerfilScreen(
                 modifier = Modifier.size(66.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(text = "🦸", fontSize = 34.sp)
+                    Text(
+                        text = if (sexo == "niña") "👧" else "👦", 
+                        fontSize = 34.sp
+                    )
                 }
             }
             Spacer(Modifier.width(14.dp))

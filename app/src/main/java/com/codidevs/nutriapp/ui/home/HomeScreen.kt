@@ -30,6 +30,7 @@ import com.codidevs.nutriapp.ui.theme.MangoLight
 @Composable
 fun HomeScreen(
     nombre: String,
+    sexo: String = "niño",
     nivelTexto: String,
     onSendero: () -> Unit,
     onRecompensas: () -> Unit,
@@ -158,7 +159,7 @@ fun HomeScreen(
 
         // Nota motivadora (estilo nota adhesiva, no botón)
         NotaMensaje(
-            emoji = "🦸",
+            emoji = if (sexo == "niña") "👧" else "👦",
             titulo = "¡Tú puedes, superhéroe de la salud!",
             subtitulo = "Sigue aprendiendo y ganando monedas",
             colorFondo = LeafLight,

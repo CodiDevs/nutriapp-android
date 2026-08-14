@@ -1,13 +1,16 @@
 package com.codidevs.nutriapp.ui.actividades
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -22,29 +25,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.codidevs.nutriapp.data.models.ItemDato
+import com.codidevs.nutriapp.ui.components.BarraProgresoActividad
+import com.codidevs.nutriapp.ui.components.DecoracionFondoActividad
 import com.codidevs.nutriapp.ui.components.ScreenHeader
-import com.codidevs.nutriapp.ui.theme.Berry
-import com.codidevs.nutriapp.ui.theme.BerryLight
-import com.codidevs.nutriapp.ui.theme.Ink
-import com.codidevs.nutriapp.ui.theme.InkSoft
-import com.codidevs.nutriapp.ui.theme.Leaf
-import com.codidevs.nutriapp.ui.theme.LeafDark
-import com.codidevs.nutriapp.ui.theme.LeafLight
-import com.codidevs.nutriapp.ui.theme.LineColor
-import com.codidevs.nutriapp.ui.theme.Mango
+import com.codidevs.nutriapp.ui.components.pulsoAnimado
+import com.codidevs.nutriapp.ui.theme.*
 import kotlin.math.roundToInt
 
-/**
- * Actividad "Une la imagen con el beneficio": arrastra la imagen (ej. 🚴)
- * hasta el beneficio correcto (ej. "Fortalece el corazón").
- */
 @Composable
 fun UneImagenScreen(
     pares: List<ItemDato>,
     onBack: () -> Unit,
     onTerminada: (puntaje: Int) -> Unit
 ) {
-    // Rondas: se muestran de a una, con 4 beneficios posibles (1 correcto + 3 distractores)
     val rondas = remember(pares) {
         val beneficios = pares.map { it.texto }
         pares.map { par ->
@@ -56,10 +49,8 @@ fun UneImagenScreen(
     var indice by remember { mutableStateOf(0) }
     var puntaje by remember { mutableStateOf(0) }
     var retro by remember { mutableStateOf<String?>(null) }
-    // Beneficio donde se soltó la figura con su resultado ("correcto"/"incorrecto")
     var grupoResultado by remember { mutableStateOf<Pair<String, String>?>(null) }
 
-    // Estado del arrastre (coordenadas globales)
     var posBoxRaiz by remember { mutableStateOf(Offset.Zero) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     var inicioDrag by remember { mutableStateOf<Offset?>(null) }
@@ -67,7 +58,6 @@ fun UneImagenScreen(
     var arrastrando by remember { mutableStateOf(false) }
     var rectImagen by remember { mutableStateOf(Rect.Zero) }
     var zonaSobre by remember { mutableStateOf<String?>(null) }
-    // Mapa fresco por ronda
     val posicionesBeneficio = remember(indice) { mutableMapOf<String, Rect>() }
 
     val ronda = rondas[indice]
@@ -77,11 +67,11 @@ fun UneImagenScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(BgApp)
             .onGloballyPositioned { posBoxRaiz = it.positionInRoot() }
             .pointerInput(indice, posBoxRaiz) {
                 detectDragGestures(
                     onDragStart = { pos ->
-                        // Solo se arrastra si aún no ha respondido
                         if (retro == null) {
                             val puntoGlobal = posBoxRaiz + pos
                             if (rectImagen.contains(puntoGlobal)) {
@@ -106,20 +96,17 @@ fun UneImagenScreen(
                             val soltado = beneficioMasCercano(punto, posicionesBeneficio)
                             when (soltado) {
                                 null -> {
-                                    // Soltó lejos: la figura vuelve
                                     dragOffset = Offset.Zero
                                     grupoResultado = null
                                 }
                                 imagen.texto -> {
                                     puntaje += 10
                                     retro = "correcto"
-                                    // La figura se queda donde la soltó
                                     dragOffset = punto - (inicioDrag ?: punto)
                                     grupoResultado = soltado to "correcto"
                                 }
                                 else -> {
                                     retro = "incorrecto"
-                                    // La figura se queda donde la soltó
                                     dragOffset = punto - (inicioDrag ?: punto)
                                     grupoResultado = soltado to "incorrecto"
                                 }
@@ -129,17 +116,12 @@ fun UneImagenScreen(
                         inicioDrag = null
                         ultimoPunto = null
                         zonaSobre = null
-                    },
-                    onDragCancel = {
-                        arrastrando = false
-                        inicioDrag = null
-                        ultimoPunto = null
-                        dragOffset = Offset.Zero
-                        zonaSobre = null
                     }
                 )
             }
     ) {
+        DecoracionFondoActividad()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -149,20 +131,7 @@ fun UneImagenScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            Text(
-                text = "${indice + 1} de ${rondas.size}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = InkSoft
-            )
-            LinearProgressIndicator(
-                progress = { (indice + 1).toFloat() / rondas.size },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = Leaf,
-                trackColor = LineColor
-            )
+            BarraProgresoActividad(actual = indice + 1, total = rondas.size)
 
             Spacer(Modifier.height(16.dp))
 
@@ -177,7 +146,6 @@ fun UneImagenScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Imagen arrastrable (zIndex alto para quedar encima de las opciones)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -194,6 +162,7 @@ fun UneImagenScreen(
                         .size(110.dp)
                         .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
                         .onGloballyPositioned { rectImagen = it.boundsInRoot() }
+                        .pulsoAnimado(enabled = retro == null) // La imagen a arrastrar late al inicio
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,12 +172,7 @@ fun UneImagenScreen(
                         Text(text = imagen.emoji, fontSize = 44.sp)
                         if (imagen.nombre.isNotEmpty()) {
                             Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = imagen.nombre,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = InkSoft
-                            )
+                            Text(text = imagen.nombre, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = InkSoft)
                         }
                     }
                 }
@@ -216,7 +180,6 @@ fun UneImagenScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Beneficios posibles (2x2)
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 beneficios.chunked(2).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -236,7 +199,6 @@ fun UneImagenScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // Retroalimentación
             retro?.let { estado ->
                 Surface(
                     color = if (estado == "correcto") LeafLight else BerryLight,
@@ -265,12 +227,15 @@ fun UneImagenScreen(
                             indice++
                             retro = null
                             grupoResultado = null
-                            dragOffset = Offset.Zero // la figura vuelve a su lugar en la nueva ronda
+                            dragOffset = Offset.Zero
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Leaf),
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .pulsoAnimado()
                 ) {
                     Text(
                         text = if (indice + 1 >= rondas.size) "Ver resultados" else "Siguiente →",
@@ -287,29 +252,25 @@ fun UneImagenScreen(
 private fun BeneficioTarjeta(
     texto: String,
     resaltada: Boolean,
-    resultado: String?, // "correcto" | "incorrecto" | null
+    resultado: String?,
     modifier: Modifier = Modifier,
     onPosicion: (String, Rect) -> Unit
 ) {
-    val colorFondo = when (resultado) {
-        "correcto" -> LeafLight      // verde pastel
-        "incorrecto" -> BerryLight   // rojo pastel
-        else -> if (resaltada) LeafLight else Color.White
-    }
-    val colorBorde = when (resultado) {
-        "correcto" -> Leaf
-        "incorrecto" -> Berry
-        else -> if (resaltada) Mango else LineColor
-    }
     Surface(
-        color = colorFondo,
+        color = when (resultado) {
+            "correcto" -> LeafLight
+            "incorrecto" -> BerryLight
+            else -> if (resaltada) LeafLight else Color.White
+        },
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(if (resaltada || resultado != null) 3.dp else 2.dp, colorBorde),
+        border = BorderStroke(if (resaltada || resultado != null) 3.dp else 2.dp, when (resultado) {
+            "correcto" -> Leaf
+            "incorrecto" -> Berry
+            else -> if (resaltada) Mango else LineColor
+        }),
         modifier = modifier
             .height(90.dp)
-            .onGloballyPositioned { coords ->
-                onPosicion(texto, coords.boundsInRoot())
-            }
+            .onGloballyPositioned { coords -> onPosicion(texto, coords.boundsInRoot()) }
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -328,28 +289,16 @@ private fun BeneficioTarjeta(
     }
 }
 
-/** Devuelve el beneficio más cercano al punto, o null si está lejos de todos. */
-private fun beneficioMasCercano(
-    punto: Offset,
-    posiciones: Map<String, Rect>
-): String? {
+private fun beneficioMasCercano(punto: Offset, posiciones: Map<String, Rect>): String? {
     val mejor = posiciones.entries
         .map { (texto, rect) ->
             val cx = rect.left + rect.width / 2
             val cy = rect.top + rect.height / 2
-            val dist = kotlin.math.sqrt(
-                (punto.x - cx) * (punto.x - cx) +
-                    (punto.y - cy) * (punto.y - cy)
-            )
+            val dist = kotlin.math.sqrt((punto.x - cx) * (punto.x - cx) + (punto.y - cy) * (punto.y - cy))
             texto to dist
         }
-        .minByOrNull { it.second }
-        ?: return null
+        .minByOrNull { it.second } ?: return null
     return if (mejor.second < 400f) mejor.first else null
 }
 
-/** Una ronda: la imagen a arrastrar y los beneficios posibles. */
-private data class RondaUne(
-    val imagen: ItemDato,
-    val beneficios: List<String>
-)
+private data class RondaUne(val imagen: ItemDato, val beneficios: List<String>)
