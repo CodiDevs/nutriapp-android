@@ -15,15 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.codidevs.nutriapp.ui.components.ScreenHeader
 import com.codidevs.nutriapp.ui.theme.BgApp
 import com.codidevs.nutriapp.ui.theme.Ink
 import com.codidevs.nutriapp.ui.theme.Leaf
 import com.codidevs.nutriapp.ui.theme.LeafDark
-import com.codidevs.nutriapp.ui.theme.LeafLight
 import com.codidevs.nutriapp.ui.theme.LineColor
 import com.codidevs.nutriapp.ui.theme.Mango
 import com.codidevs.nutriapp.ui.theme.MangoLight
@@ -198,12 +195,12 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            val esNiño = sexo == "niño"
+            val esBoy = sexo == "niño"
             Surface(
                 onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { sexo = "niño" },
-                color = if (esNiño) Mango else Color.White,
+                color = if (esBoy) Mango else Color.White,
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(2.dp, if (esNiño) Mango else LineColor),
+                border = BorderStroke(2.dp, if (esBoy) Mango else LineColor),
                 modifier = Modifier.weight(1f).height(52.dp)
             ) {
                 Row(
@@ -211,16 +208,16 @@ fun RegistroScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "👦 Niño", style = MaterialTheme.typography.labelLarge, color = if (esNiño) Color.White else Ink)
+                    Text(text = "👦 Niño", style = MaterialTheme.typography.labelLarge, color = if (esBoy) Color.White else Ink)
                 }
             }
 
-            val esNiña = sexo == "niña"
+            val esGirl = sexo == "niña"
             Surface(
                 onClick = com.codidevs.nutriapp.data.audio.onClickConSonido { sexo = "niña" },
-                color = if (esNiña) Mango else Color.White,
+                color = if (esGirl) Mango else Color.White,
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(2.dp, if (esNiña) Mango else LineColor),
+                border = BorderStroke(2.dp, if (esGirl) Mango else LineColor),
                 modifier = Modifier.weight(1f).height(52.dp)
             ) {
                 Row(
@@ -228,7 +225,7 @@ fun RegistroScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "👧 Niña", style = MaterialTheme.typography.labelLarge, color = if (esNiña) Color.White else Ink)
+                    Text(text = "👧 Niña", style = MaterialTheme.typography.labelLarge, color = if (esGirl) Color.White else Ink)
                 }
             }
         }

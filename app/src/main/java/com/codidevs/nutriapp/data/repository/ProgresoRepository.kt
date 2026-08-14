@@ -23,13 +23,13 @@ class ProgresoRepository(context: Context) {
         porcentaje: Int,
         puntaje: Int
     ): Int {
-        val clavePorcentaje = "porcentaje_nivel_${nivel}_actividad_${actividadId}"
+        val clavePorcentaje = "porcentaje_nivel_${nivel}_actividad_$actividadId"
         val mejorAnterior = prefs.getInt(clavePorcentaje, -1)
         if (porcentaje > mejorAnterior) {
             prefs.edit().putInt(clavePorcentaje, porcentaje).apply()
         }
         
-        val clavePuntaje = "puntaje_nivel_${nivel}_actividad_${actividadId}"
+        val clavePuntaje = "puntaje_nivel_${nivel}_actividad_$actividadId"
         val mejorPuntajeAnterior = prefs.getInt(clavePuntaje, -1)
         if (puntaje > mejorPuntajeAnterior) {
             prefs.edit().putInt(clavePuntaje, puntaje).apply()
@@ -57,7 +57,7 @@ class ProgresoRepository(context: Context) {
 
     /** Estrellas del mejor desempeño de una actividad (0-3, -1 si nunca se jugó). */
     fun estrellasActividad(nivel: Int, actividadId: Int): Int {
-        val pct = prefs.getInt("porcentaje_nivel_${nivel}_actividad_${actividadId}", -1)
+        val pct = prefs.getInt("porcentaje_nivel_${nivel}_actividad_$actividadId", -1)
         return if (pct >= 0) estrellasPorPorcentaje(pct) else -1
     }
 
@@ -97,7 +97,7 @@ class ProgresoRepository(context: Context) {
                 // una en la mitad y una en la última.
                 val mitad = (totalActividades / 2) + 1
                 for (i in 1..totalActividades) {
-                    res[i] = if (i == 1 || i == mitad || i == totalActividades) 1 else 0
+                    res[i] = if (i == 1 || (mitad == i) || i == totalActividades) 1 else 0
                 }
             }
         }

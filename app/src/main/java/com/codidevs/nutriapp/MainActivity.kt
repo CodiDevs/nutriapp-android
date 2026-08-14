@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                     val preguntas = remember { PreguntasRepository(applicationContext) }
                     
                     // LIMPIEZA DE DATOS DE PRUEBA (Solo la primera vez que se abre esta versión)
-                    val prefs = getSharedPreferences("config_app", android.content.Context.MODE_PRIVATE)
+                    val prefs = getSharedPreferences("config_app", MODE_PRIVATE)
                     val limpiaRealizada = prefs.getBoolean("limpieza_v1", false)
                     if (!limpiaRealizada) {
                         progreso.borrarTodo()
@@ -79,9 +79,9 @@ class MainActivity : ComponentActivity() {
                     val inicio = if (progreso.usuarioRegistrado) NutriRoutes.HOME else NutriRoutes.SPLASH
                     var nombreUsuario by remember { mutableStateOf(progreso.usuarioNombre) }
                     var tabActiva by remember { mutableStateOf("home") }
-                    var moduloActual by remember { mutableStateOf(1) } // 1 = Nutrición, 2 = Actividad física
+                    var moduloActual by remember { mutableIntStateOf(1) } // 1 = Nutrición, 2 = Actividad física
                     // Refresca la UI cuando cambia el progreso
-                    var versionProgreso by remember { mutableStateOf(0) }
+                    var versionProgreso by remember { mutableIntStateOf(0) }
                     // Mapas de niveles para calcular los totales (actividades y monedas por nivel)
                     val actividadesPorNivel = remember {
                         (1..7).associateWith { preguntas.totalActividadesNivel(it) }
@@ -280,6 +280,9 @@ class MainActivity : ComponentActivity() {
                                             onVerRecompensas = {
                                                 navController.navigate(NutriRoutes.RECOMPENSAS)
                                             },
+                                            onVerPrivacidad = {
+                                                navController.navigate(NutriRoutes.PRIVACY)
+                                            },
                                             onCrearRegistro = {
                                                 // Borra usuario y progreso, y reinicia el registro
                                                 progreso.borrarTodo()
@@ -392,21 +395,21 @@ class MainActivity : ComponentActivity() {
 
                             // Mapea los datos según el tipo de la actividad
                             val datos: Any? = when (actJson?.tipo) {
-                                "descubre" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.descubre(it)
+                                "descubre" -> actJson.let {
+                                    ActividadMapper.descubre(it)
                                 }
                                 "grupos" -> GruposAlimenticios.TODOS
-                                "memoria" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.memoria(it)
+                                "memoria" -> actJson.let {
+                                    ActividadMapper.memoria(it)
                                 }
-                                "une" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.une(it)
+                                "une" -> actJson.let {
+                                    ActividadMapper.une(it)
                                 }
-                                "vf" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.preguntasVF(it)
+                                "vf" -> actJson.let {
+                                    ActividadMapper.preguntasVF(it)
                                 }
-                                "completa" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.frases(it).map { frase ->
+                                "completa" -> actJson.let {
+                                    ActividadMapper.frases(it).map { frase ->
                                         com.codidevs.nutriapp.ui.actividades.FraseIncompleta(
                                             emoji = frase.emoji,
                                             fraseAntes = frase.antes,
@@ -416,20 +419,20 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 }
-                                "mejor_opcion", "situaciones" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.mejorOpcion(it)
+                                "mejor_opcion", "situaciones" -> actJson.let {
+                                    ActividadMapper.mejorOpcion(it)
                                 }
-                                "ruleta" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.ruleta(it)
+                                "ruleta" -> actJson.let {
+                                    ActividadMapper.ruleta(it)
                                 }
-                                "quiz" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.quiz(it)
+                                "quiz" -> actJson.let {
+                                    ActividadMapper.quiz(it)
                                 }
-                                "semaforo" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.semaforo(it)
+                                "semaforo" -> actJson.let {
+                                    ActividadMapper.semaforo(it)
                                 }
-                                "reto" -> actJson?.let {
-                                    com.codidevs.nutriapp.data.repository.ActividadMapper.reto(it)
+                                "reto" -> actJson.let {
+                                    ActividadMapper.reto(it)
                                 }
                                 else -> null
                             }
@@ -806,8 +809,8 @@ class MainActivity : ComponentActivity() {
 
 /** Calcula el texto "Nivel X · Módulo" que se muestra en el Home. */
 private fun nivelActualTexto(
-    progreso: com.codidevs.nutriapp.data.repository.ProgresoRepository,
-    preguntas: com.codidevs.nutriapp.data.repository.PreguntasRepository,
+    progreso: ProgresoRepository,
+    preguntas: PreguntasRepository,
     modulo: Int
 ): String {
     val nombreModulo = if (modulo == 1) "Nutrición" else "Actividad física"
@@ -821,8 +824,8 @@ private fun nivelActualTexto(
 
 /** Nivel global actual (1-7): el primero sin completar. */
 private fun nivelActualGlobal(
-    progreso: com.codidevs.nutriapp.data.repository.ProgresoRepository,
-    preguntas: com.codidevs.nutriapp.data.repository.PreguntasRepository
+    progreso: ProgresoRepository,
+    preguntas: PreguntasRepository
 ): Int {
     val nivel = (1..7).firstOrNull { nivel ->
         !progreso.nivelCompleto(nivel, preguntas.totalActividadesNivel(nivel))
